@@ -1,17 +1,11 @@
 extends Node
 ## Global display settings — fullscreen works from anywhere in the game.
+## Делегирует постоянное состояние в SettingsManager.
 
 
 func _ready() -> void:
-	call_deferred("_apply_default_fullscreen")
-
-
-func _apply_default_fullscreen() -> void:
-	var window: Window = get_tree().root
-	if window == null:
-		return
-	if window.mode == Window.MODE_WINDOWED:
-		window.mode = Window.MODE_EXCLUSIVE_FULLSCREEN
+	# SettingsManager применяет fullscreen при старте.
+	pass
 
 
 func _input(event: InputEvent) -> void:
@@ -21,17 +15,4 @@ func _input(event: InputEvent) -> void:
 
 
 func toggle_fullscreen() -> void:
-	var window: Window = get_tree().root
-	if window == null:
-		return
-
-	var is_fullscreen := window.mode in [
-		Window.MODE_FULLSCREEN,
-		Window.MODE_EXCLUSIVE_FULLSCREEN,
-	]
-
-	if is_fullscreen:
-		window.mode = Window.MODE_WINDOWED
-		window.borderless = false
-	else:
-		window.mode = Window.MODE_EXCLUSIVE_FULLSCREEN
+	SettingsManager.set_fullscreen(not SettingsManager.fullscreen)

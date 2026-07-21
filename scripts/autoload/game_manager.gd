@@ -7,6 +7,7 @@ const MAX_NIGHTS := 30
 const MINUTES_PER_SHIFT := 12.0
 const SHIFT_START_HOUR := 22
 const SHIFT_DURATION_HOURS := 8.0
+const SAVE_PATH := "user://horror_factory_save.cfg"
 
 var current_night: int = 1
 var game_state: GameState = GameState.MENU
@@ -15,11 +16,56 @@ var total_defects: int = 0
 var total_accidents: int = 0
 var shifts_survived: int = 0
 var _pending_report: Dictionary = {}
+## Если true — после загрузки игровой сцены сразу стартует смена.
+var _pending_boot_action: StringName = &""
 
 func _ready() -> void:
 	EventBus.shift_choice_made.connect(_on_shift_choice_made)
 	EventBus.player_died.connect(_on_player_died)
 	EventBus.ending_triggered.connect(_on_ending_triggered)
+
+
+func has_save() -> bool:
+	return FileAccess.file_exists(SAVE_PATH)
+
+
+func clear_save() -> void:
+	if has_save():
+		DirAccess.remove_absolute(SAVE_PATH)
+
+
+func save_progress() -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("progress", "night", current_night)
+	cfg.set_value("progress", "shifts_survived", shifts_survived)
+	cfg.set_value("progress", "total_defects", total_defects)
+	cfg.set_value("progress", "total_accidents", total_accidents)
+	cfg.set_value("progress", "money", StoryManager.money_earned)
+	cfg.save(SAVE_PATH)
+
+
+func request_new_game() -> void:
+	clear_save()
+	_pending_boot_action = &"new_game"
+
+
+func request_continue() -> void:
+	_pending_boot_action = &"continue"
+
+
+## Вызывается из игровой сцены после готовности мира.
+func consume_boot_action() -> void:
+	var action := _pending_boot_action
+	_pending_boot_action = &""
+	match action:
+		&"new_game":
+			start_new_game()
+		&"continue":
+			continue_game()
+		_:
+			# Прямой запуск сцены без меню — начинаем новую смену.
+			if game_state == GameState.MENU:
+				start_new_game()
 
 
 func start_new_game() -> void:
@@ -28,6 +74,27 @@ func start_new_game() -> void:
 	total_accidents = 0
 	shifts_survived = 0
 	StoryManager.reset()
+	AreaManager.reset()
+	InventoryManager.reset()
+	MonsterMemory.reset()
+	SanitySystem.reset()
+	LivingFactory.reset()
+	_start_shift()
+	save_progress()
+
+
+func continue_game() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(SAVE_PATH) != OK:
+		start_new_game()
+		return
+
+	current_night = int(cfg.get_value("progress", "night", 1))
+	shifts_survived = int(cfg.get_value("progress", "shifts_survived", 0))
+	total_defects = int(cfg.get_value("progress", "total_defects", 0))
+	total_accidents = int(cfg.get_value("progress", "total_accidents", 0))
+	StoryManager.reset()
+	StoryManager.money_earned = int(cfg.get_value("progress", "money", 0))
 	AreaManager.reset()
 	InventoryManager.reset()
 	MonsterMemory.reset()
@@ -119,6 +186,7 @@ func _finalize_shift(success: bool) -> void:
 		shifts_survived += 1
 		StoryManager.on_shift_completed(current_night, _pending_report.get("quota_met", false))
 		current_night = mini(current_night + 1, MAX_NIGHTS + 1)
+		save_progress()
 
 
 func _on_player_died() -> void:

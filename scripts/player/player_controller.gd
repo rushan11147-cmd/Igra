@@ -5,7 +5,6 @@ const WALK_SPEED := 4.0
 const SPRINT_SPEED := 7.0
 const CROUCH_SPEED := 2.0
 const JUMP_VELOCITY := 4.5
-const MOUSE_SENSITIVITY := 0.002
 const INTERACTION_RANGE := 3.0
 const STAND_HEIGHT := 1.6
 const CROUCH_HEIGHT := 0.9
@@ -44,6 +43,15 @@ func _ready() -> void:
 		collision_shape = $CollisionShape3D
 	if not flashlight:
 		flashlight = $Head/Camera3D/Flashlight
+	if camera:
+		camera.add_to_group("player_camera")
+		camera.fov = SettingsManager.fov
+	SettingsManager.settings_changed.connect(_on_settings_changed)
+
+
+func _on_settings_changed() -> void:
+	if camera:
+		camera.fov = SettingsManager.fov
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -53,8 +61,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-		rotate_y(-event.relative.x * MOUSE_SENSITIVITY)
-		head.rotate_x(-event.relative.y * MOUSE_SENSITIVITY)
+		var sens := SettingsManager.mouse_sensitivity
+		rotate_y(-event.relative.x * sens)
+		head.rotate_x(-event.relative.y * sens)
 		head.rotation.x = clampf(head.rotation.x, deg_to_rad(-89.0), deg_to_rad(89.0))
 
 	if event.is_action_pressed("ui_cancel"):

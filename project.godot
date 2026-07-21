@@ -12,12 +12,14 @@ config_version=5
 
 config/name="Horror Factory"
 config/description="Психологический хоррор с элементами симулятора производства. Переживите ночную смену на заводе."
-run/main_scene="res://scenes/world/main.tscn"
+run/main_scene="res://scenes/ui/main_menu/MainMenu.tscn"
 config/features=PackedStringArray("4.7", "GL Compatibility")
 config/icon="res://icon.svg"
 
 [autoload]
 
+SettingsManager="*res://scripts/autoload/settings_manager.gd"
+SceneLoader="*res://scripts/autoload/scene_loader.gd"
 EventBus="*res://scripts/autoload/event_bus.gd"
 DisplayManager="*res://scripts/autoload/display_manager.gd"
 SoundLibrary="*res://scripts/autoload/sound_library.gd"

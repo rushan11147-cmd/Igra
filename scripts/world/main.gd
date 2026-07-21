@@ -17,7 +17,7 @@ func _ready() -> void:
 
 
 func _begin_game() -> void:
-	GameManager.start_new_game()
+	GameManager.consume_boot_action()
 
 
 func _register_factory_nodes() -> void:
