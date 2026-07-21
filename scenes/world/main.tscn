@@ -20,6 +20,7 @@
 [ext_resource type="PackedScene" uid="uid://factorysky001" path="res://scenes/world/factory_sky.tscn" id="21"]
 [ext_resource type="Script" path="res://scripts/world/factory_map/gameplay_anchor.gd" id="22"]
 [ext_resource type="PackedScene" path="res://scenes/world/factory_map/factory_map.tscn" id="23"]
+[ext_resource type="PackedScene" uid="uid://screamer001" path="res://scenes/ui/screamer.tscn" id="24"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_interact"]
 size = Vector3(2, 2, 2)
@@ -238,8 +239,9 @@ volume_db = -16.0
 
 [node name="HUD" parent="." instance=ExtResource("3")]
 
-[node name="ShiftReport" parent="." instance=ExtResource("4")]
+[node name="Screamer" parent="." instance=ExtResource("24")]
 
+[node name="ShiftReport" parent="." instance=ExtResource("4")]
 [node name="Tablet" parent="." instance=ExtResource("10")]
 
 [node name="ShiftChoice" parent="." instance=ExtResource("14")]
