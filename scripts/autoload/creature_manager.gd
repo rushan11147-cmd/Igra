@@ -7,8 +7,8 @@ const CREATURE_DATA: Dictionary = {
 	CreatureType.OBSERVER: {
 		"id": &"observer",
 		"name": "Наблюдатель",
-		"attacks": false,
-		"reacts_to_noise": false,
+		"attacks": true,
+		"reacts_to_noise": true,
 		"reacts_to_light": true,
 		"vent_only": false,
 		"darkness_only": false,
@@ -49,11 +49,11 @@ var active_types_tonight: Array[CreatureType] = []
 func setup_for_night(night: int) -> void:
 	active_types_tonight.clear()
 
-	if night < 6:
+	if night < 3:
 		active_type = CreatureType.OBSERVER
-	elif night < 12:
+	elif night < 8:
 		active_type = [CreatureType.OBSERVER, CreatureType.HUNTER].pick_random()
-	elif night < 20:
+	elif night < 15:
 		active_type = [CreatureType.HUNTER, CreatureType.CRAWLER].pick_random()
 	else:
 		active_type = CreatureType.values().pick_random()

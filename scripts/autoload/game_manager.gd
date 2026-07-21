@@ -200,10 +200,11 @@ func _on_ending_triggered(_ending_id: StringName) -> void:
 
 
 func get_horror_phase() -> int:
-	if current_night <= 5:
-		return 0
-	if current_night <= 12:
+	# Phase 1 from night 1 — иначе враги не появляются первые 5 ночей
+	if current_night <= 3:
 		return 1
-	if current_night <= 22:
+	if current_night <= 10:
 		return 2
+	if current_night <= 20:
+		return 3
 	return 3

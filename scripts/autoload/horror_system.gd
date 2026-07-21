@@ -59,23 +59,36 @@ func _process(delta: float) -> void:
 func reset_for_night(night: int) -> void:
 	_night = night
 	_phase = GameManager.get_horror_phase()
-	threat_level = _phase * 4.0
+	threat_level = 18.0 + _phase * 8.0
 	black_mass_amount = maxf(0.0, black_mass_amount - 8.0)
 	entity_active = false
 	entity_observing = false
-	_event_cooldown = 40.0
-	_sabotage_cooldown = 60.0
+	_event_cooldown = 12.0
+	_sabotage_cooldown = 35.0
 	_emit_threat()
+	# Первое появление сущности через короткое время после старта смены
+	var first_spawn := get_tree().create_timer(18.0 + randf() * 12.0)
+	first_spawn.timeout.connect(_force_early_spawn)
+
+
+func _force_early_spawn() -> void:
+	if entity_active:
+		return
+	if _phase < 1:
+		return
+	add_threat(25.0, &"early_presence")
+	if not entity_active:
+		start_manifestation(false)
 
 
 func add_threat(amount: float, reason: StringName = &"") -> void:
 	threat_level = clampf(threat_level + amount, 0.0, MAX_THREAT)
 	_emit_threat()
 
-	if threat_level >= 40.0 and not entity_observing and _phase >= 1:
+	if threat_level >= 25.0 and not entity_observing and _phase >= 1:
 		_start_observing()
 
-	if threat_level >= 55.0 and not entity_active and _phase >= 1:
+	if threat_level >= 35.0 and not entity_active and _phase >= 1:
 		_activate_entity()
 
 
@@ -148,20 +161,21 @@ func _try_paranormal_event() -> void:
 	if available.is_empty():
 		return
 
-	var interval := lerpf(120.0, 20.0, threat_level / MAX_THREAT)
-	_event_cooldown = interval + randf_range(-15.0, 15.0)
+	var interval := lerpf(45.0, 12.0, threat_level / MAX_THREAT)
+	_event_cooldown = interval + randf_range(-5.0, 8.0)
 
-	if randf() > threat_level / MAX_THREAT * 0.4 + 0.08:
+	if randf() > threat_level / MAX_THREAT * 0.55 + 0.25:
 		return
 
 	var event_id: StringName = available[randi() % available.size()]
 
 	# Hallucinations: entity appears but isn't real
-	if event_id == &"hallucination" or event_id == &"entity_glimpse":
-		var is_hallucination := randf() < 0.6
+	if event_id == &"hallucination" or event_id == &"entity_glimpse" or event_id == &"entity_manifest":
+		var is_hallucination := event_id != &"entity_manifest" and randf() < 0.35
 		start_manifestation(is_hallucination)
-		var timer := get_tree().create_timer(randf_range(0.5, 2.0))
-		timer.timeout.connect(end_manifestation)
+		if is_hallucination:
+			var timer := get_tree().create_timer(randf_range(2.5, 5.0))
+			timer.timeout.connect(end_manifestation)
 
 	EventBus.paranormal_event.emit(event_id, {
 		"threat": threat_level,
