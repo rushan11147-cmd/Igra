@@ -74,6 +74,8 @@ func _set_blocker_enabled(enabled: bool) -> void:
 
 
 func _play_door_sound() -> void:
+	if Engine.is_editor_hint():
+		return
 	if Engine.get_main_loop() == null:
 		return
 	var path := SoundLibrary.pick_random(SoundLibrary.DOOR_OPENS if is_open else SoundLibrary.DOOR_SLAMS)

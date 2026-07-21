@@ -1,6 +1,8 @@
+@tool
 extends Node3D
 ## Multi-room factory interior: walls, ceilings, doors, room lights.
 ## Rooms: Entrance, Production, Warehouse, Office, Utility, Hall8.
+## @tool — геометрия видна в редакторе (как в игре).
 
 const WALL_H := 4.5
 const WALL_T := 0.35
@@ -10,6 +12,13 @@ const DOOR_H := 2.4
 ## Ширина проёма — с запасом под капсулу игрока (radius 0.4).
 const OPEN_W := 2.2
 
+## В Inspector: включи галку → стены пересоберутся в редакторе.
+@export var refresh_editor_preview: bool = false:
+	set(value):
+		if value and Engine.is_editor_hint():
+			call_deferred("_rebuild")
+		refresh_editor_preview = false
+
 var _wall_mat: StandardMaterial3D
 var _wall_alt_mat: StandardMaterial3D
 var _floor_mat: StandardMaterial3D
@@ -18,10 +27,23 @@ var _door_mat: StandardMaterial3D
 
 
 func _ready() -> void:
+	_rebuild()
+
+
+func _rebuild() -> void:
+	_clear_generated()
 	_build_materials()
 	_build_rooms()
+	# В редакторе двери/свет тоже рисуем; звуки/EventBus при клике не обязательны
 	_build_doors()
 	_build_lights()
+
+
+func _clear_generated() -> void:
+	var kids := get_children()
+	for child in kids:
+		remove_child(child)
+		child.free()
 
 
 func _build_materials() -> void:

@@ -1,5 +1,7 @@
+@tool
 extends Node3D
 ## Procedural layout of Kenney City Kit Industrial GLB models (CC0).
+## @tool — модели видны в редакторе.
 
 const GLB_DIR := "res://assets/models/industrial/glb/"
 
@@ -23,8 +25,22 @@ const LAYOUT: Array[Dictionary] = [
 	{"file": "building-m.glb", "pos": Vector3(14, 0, -24), "rot": -0.3, "scale": 0.9},
 ]
 
+@export var refresh_editor_preview: bool = false:
+	set(value):
+		if value and Engine.is_editor_hint():
+			call_deferred("_rebuild")
+		refresh_editor_preview = false
+
 
 func _ready() -> void:
+	_rebuild()
+
+
+func _rebuild() -> void:
+	var kids := get_children()
+	for child in kids:
+		remove_child(child)
+		child.free()
 	_build_layout()
 
 
