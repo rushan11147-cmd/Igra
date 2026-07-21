@@ -62,9 +62,15 @@ func weld_shut() -> void:
 
 func _set_blocker_enabled(enabled: bool) -> void:
 	if _blocker == null:
+		_blocker = get_node_or_null("Blocker") as StaticBody3D
+	if _blocker == null:
 		return
-	_blocker.set_collision_layer_value(1, enabled)
-	_blocker.visible = enabled
+	# Надёжно выключаем коллизию (одного layer иногда недостаточно).
+	_blocker.collision_layer = 1 if enabled else 0
+	_blocker.collision_mask = 0
+	for child in _blocker.get_children():
+		if child is CollisionShape3D:
+			(child as CollisionShape3D).disabled = not enabled
 
 
 func _play_door_sound() -> void:

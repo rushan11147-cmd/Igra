@@ -3,10 +3,12 @@ extends Node3D
 ## Rooms: Entrance, Production, Warehouse, Office, Utility, Hall8.
 
 const WALL_H := 4.5
-const WALL_T := 0.3
+const WALL_T := 0.35
 const CEIL_T := 0.2
-const DOOR_W := 1.6
+const DOOR_W := 1.8
 const DOOR_H := 2.4
+## Ширина проёма — с запасом под капсулу игрока (radius 0.4).
+const OPEN_W := 2.2
 
 var _wall_mat: StandardMaterial3D
 var _wall_alt_mat: StandardMaterial3D
@@ -23,60 +25,63 @@ func _ready() -> void:
 
 
 func _build_materials() -> void:
-	_wall_mat = _make_pbr(WarehouseCatalog.MAT_WALL, Color(0.25, 0.25, 0.28), 4.0)
-	_wall_alt_mat = _make_pbr(WarehouseCatalog.MAT_WALL_ALT, Color(0.2, 0.22, 0.24), 3.0)
-	_floor_mat = _make_pbr(WarehouseCatalog.MAT_FLOOR, Color(0.18, 0.17, 0.16), 6.0)
-	_ceil_mat = _make_pbr(WarehouseCatalog.MAT_DIRTY, Color(0.1, 0.1, 0.11), 2.0)
+	# Важно: Megascans IDs вроде shhnouh — это UV-атласы пропов, НЕ тайловые стены.
+	# На больших BoxMesh они выглядят как цветная «каша». Архитектура — procedural PBR.
+	_wall_mat = _make_surface(Color(0.58, 0.55, 0.5), 0.9, 0.02, 0.35)
+	_wall_alt_mat = _make_surface(Color(0.42, 0.43, 0.45), 0.72, 0.35, 0.4)
+	_floor_mat = _make_surface(Color(0.5, 0.47, 0.42), 0.95, 0.0, 0.22)
+	_ceil_mat = _make_surface(Color(0.3, 0.29, 0.28), 0.88, 0.08, 0.5)
 	_door_mat = StandardMaterial3D.new()
-	_door_mat.albedo_color = Color(0.22, 0.18, 0.14)
-	_door_mat.metallic = 0.65
-	_door_mat.roughness = 0.4
-	_door_mat.emission_enabled = true
-	_door_mat.emission = Color(0.15, 0.05, 0.02)
-	_door_mat.emission_energy_multiplier = 0.4
+	_door_mat.albedo_color = Color(0.28, 0.24, 0.2)
+	_door_mat.metallic = 0.55
+	_door_mat.roughness = 0.45
+
+
+func _make_surface(color: Color, roughness: float, metallic: float, noise_scale: float) -> StandardMaterial3D:
+	var mat := StandardMaterial3D.new()
+	mat.albedo_color = color
+	mat.roughness = roughness
+	mat.metallic = metallic
+	mat.uv1_triplanar = true
+	mat.uv1_world_triplanar = true
+	mat.uv1_triplanar_sharpness = 4.0
+	mat.uv1_scale = Vector3(noise_scale, noise_scale, noise_scale)
+
+	var noise := FastNoiseLite.new()
+	noise.seed = int(color.r * 1000.0 + color.g * 100.0)
+	noise.frequency = 0.035
+	noise.fractal_octaves = 3
+
+	var ntex := NoiseTexture2D.new()
+	ntex.width = 512
+	ntex.height = 512
+	ntex.seamless = true
+	ntex.noise = noise
+	mat.albedo_texture = ntex
+	# Смешиваем шум с базовым цветом через albedo_color
+	mat.albedo_color = color
+	return mat
 
 
 func _make_pbr(asset_id: String, fallback: Color, uv_scale: float) -> StandardMaterial3D:
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = fallback
-	mat.roughness = 0.85
-	mat.uv1_scale = Vector3(uv_scale, uv_scale, uv_scale)
-	var albedo := WarehouseCatalog.basecolor_path(asset_id)
-	if albedo != "":
-		mat.albedo_texture = load(albedo)
-		mat.albedo_color = Color.WHITE
-	var normal := WarehouseCatalog.normal_path(asset_id)
-	if normal != "":
-		mat.normal_enabled = true
-		mat.normal_texture = load(normal)
-		mat.normal_scale = 1.0
-	var rough := WarehouseCatalog.roughness_path(asset_id)
-	if rough != "":
-		mat.roughness_texture = load(rough)
-	return mat
+	# Оставлено для совместимости; для стен не использовать prop-атласы.
+	return _make_surface(fallback, 0.85, 0.05, 1.0 / maxf(uv_scale, 0.1))
 
 
 func _build_rooms() -> void:
 	# Outer shell — large factory footprint
 	_rect_room(Rect2(-20, -16, 40, 32), true)
 
-	# Internal partitions (with door gaps handled by door builder)
+	# Внутренние перегородки с аккуратным дверным проёмом (не на всю высоту!)
 	# Production | Warehouse (x = 10)
-	_wall_segment(Vector3(10, WALL_H * 0.5, -8), Vector3(WALL_T, WALL_H, 8), _wall_mat)  # north of door
-	_wall_segment(Vector3(10, WALL_H * 0.5, 8), Vector3(WALL_T, WALL_H, 8), _wall_mat)   # south of door
-	# gap at z≈0 between them for door
-
+	_partition_along_z(10.0, -16.0, 16.0, 0.0, _wall_mat)
 	# Production | Office (x = -10)
-	_wall_segment(Vector3(-10, WALL_H * 0.5, -8), Vector3(WALL_T, WALL_H, 8), _wall_alt_mat)
-	_wall_segment(Vector3(-10, WALL_H * 0.5, 8), Vector3(WALL_T, WALL_H, 8), _wall_alt_mat)
-
-	# Production | Utility (z = -6) — north wall with gap
-	_wall_segment(Vector3(-5, WALL_H * 0.5, -6), Vector3(8, WALL_H, WALL_T), _wall_mat)
-	_wall_segment(Vector3(5, WALL_H * 0.5, -6), Vector3(8, WALL_H, WALL_T), _wall_mat)
-
-	# Hall 8 enclosure (NW corner) — gaps for locked door
-	_wall_with_gap(Vector3(-15, WALL_H * 0.5, -6), Vector3(8, WALL_H, WALL_T), DOOR_W + 0.4, true, _wall_alt_mat)
-	_wall_with_gap(Vector3(-10, WALL_H * 0.5, -11), Vector3(WALL_T, WALL_H, 8), DOOR_W + 0.4, false, _wall_alt_mat)
+	_partition_along_z(-10.0, -16.0, 16.0, 0.0, _wall_alt_mat)
+	# Production | Utility (z = -6)
+	_partition_along_x(-10.0, 10.0, -6.0, 0.0, _wall_mat)
+	# Hall 8 enclosure
+	_partition_along_x(-19.0, -11.0, -6.0, -15.0, _wall_alt_mat)
+	_partition_along_z(-10.0, -15.0, -7.0, -11.0, _wall_alt_mat)
 
 	# Floor patches per room (visual distinction)
 	_floor_patch(Vector3(0, 0.01, 2), Vector3(18, 0.05, 14), _floor_mat)       # production
@@ -96,15 +101,64 @@ func _rect_room(rect: Rect2, with_outer: bool) -> void:
 	var cz := rect.position.y + rect.size.y * 0.5
 	var w := rect.size.x
 	var d := rect.size.y
-	# North / South walls with entrance gaps
-	_wall_with_gap(Vector3(cx, WALL_H * 0.5, cz - d * 0.5), Vector3(w, WALL_H, WALL_T), DOOR_W * 1.5, true, _wall_mat)
-	_wall_with_gap(Vector3(cx, WALL_H * 0.5, cz + d * 0.5), Vector3(w, WALL_H, WALL_T), DOOR_W * 1.8, true, _wall_mat)
-	# East / West solid
+	var x0 := rect.position.x
+	var x1 := rect.position.x + rect.size.x
+	var z0 := rect.position.y
+	var z1 := rect.position.y + rect.size.y
+	# North / South — проём под дверь + перемычка сверху
+	_partition_along_x(x0, x1, z0, cx, _wall_mat)
+	_partition_along_x(x0, x1, z1, cx, _wall_mat)
+	# East / West — сплошные
 	_wall_segment(Vector3(cx + w * 0.5, WALL_H * 0.5, cz), Vector3(WALL_T, WALL_H, d), _wall_mat)
 	_wall_segment(Vector3(cx - w * 0.5, WALL_H * 0.5, cz), Vector3(WALL_T, WALL_H, d), _wall_mat)
 
 
+## Стена вдоль Z (фиксированный X), дверной проём около door_z.
+func _partition_along_z(x: float, z_min: float, z_max: float, door_z: float, mat: StandardMaterial3D) -> void:
+	var half := OPEN_W * 0.5
+	var z_left_end := door_z - half
+	var z_right_start := door_z + half
+	# Южный кусок
+	if z_left_end - z_min > 0.05:
+		var len_s := z_left_end - z_min
+		_wall_segment(Vector3(x, WALL_H * 0.5, z_min + len_s * 0.5), Vector3(WALL_T, WALL_H, len_s), mat)
+	# Северный кусок
+	if z_max - z_right_start > 0.05:
+		var len_n := z_max - z_right_start
+		_wall_segment(Vector3(x, WALL_H * 0.5, z_right_start + len_n * 0.5), Vector3(WALL_T, WALL_H, len_n), mat)
+	# Перемычка над дверью — закрывает просвет до потолка
+	_add_door_header(Vector3(x, 0, door_z), true, mat)
+
+
+## Стена вдоль X (фиксированный Z), дверной проём около door_x.
+func _partition_along_x(x_min: float, x_max: float, z: float, door_x: float, mat: StandardMaterial3D) -> void:
+	var half := OPEN_W * 0.5
+	var x_left_end := door_x - half
+	var x_right_start := door_x + half
+	if x_left_end - x_min > 0.05:
+		var len_l := x_left_end - x_min
+		_wall_segment(Vector3(x_min + len_l * 0.5, WALL_H * 0.5, z), Vector3(len_l, WALL_H, WALL_T), mat)
+	if x_max - x_right_start > 0.05:
+		var len_r := x_max - x_right_start
+		_wall_segment(Vector3(x_right_start + len_r * 0.5, WALL_H * 0.5, z), Vector3(len_r, WALL_H, WALL_T), mat)
+	_add_door_header(Vector3(door_x, 0, z), false, mat)
+
+
+func _add_door_header(center: Vector3, wall_is_yz: bool, mat: StandardMaterial3D) -> void:
+	var header_h := WALL_H - DOOR_H
+	if header_h <= 0.05:
+		return
+	var y := DOOR_H + header_h * 0.5
+	if wall_is_yz:
+		# стена в плоскости YZ (нормаль по X)
+		_wall_segment(Vector3(center.x, y, center.z), Vector3(WALL_T, header_h, OPEN_W + 0.08), mat)
+	else:
+		# стена в плоскости XY (нормаль по Z)
+		_wall_segment(Vector3(center.x, y, center.z), Vector3(OPEN_W + 0.08, header_h, WALL_T), mat)
+
+
 func _wall_with_gap(pos: Vector3, size: Vector3, gap: float, gap_on_x: bool, mat: StandardMaterial3D) -> void:
+	# Совместимость: полный проём + перемычка
 	var axis_len: float = size.x if gap_on_x else size.z
 	var segment := (axis_len - gap) * 0.5
 	if segment < 0.4:
@@ -114,10 +168,12 @@ func _wall_with_gap(pos: Vector3, size: Vector3, gap: float, gap_on_x: bool, mat
 		var offset := (segment + gap) * 0.5
 		_wall_segment(pos + Vector3(-offset, 0, 0), Vector3(segment, size.y, size.z), mat)
 		_wall_segment(pos + Vector3(offset, 0, 0), Vector3(segment, size.y, size.z), mat)
+		_add_door_header(Vector3(pos.x, 0, pos.z), false, mat)
 	else:
 		var z_off := (segment + gap) * 0.5
 		_wall_segment(pos + Vector3(0, 0, -z_off), Vector3(size.x, size.y, segment), mat)
 		_wall_segment(pos + Vector3(0, 0, z_off), Vector3(size.x, size.y, segment), mat)
+		_add_door_header(Vector3(pos.x, 0, pos.z), true, mat)
 
 
 func _wall_segment(pos: Vector3, size: Vector3, mat: StandardMaterial3D) -> void:
@@ -148,18 +204,12 @@ func _floor_patch(pos: Vector3, size: Vector3, mat: StandardMaterial3D) -> void:
 
 
 func _build_doors() -> void:
-	# Door: Entrance (south outer) — already open gap, add decorative door frame pair
-	_spawn_door(&"door_entrance", Vector3(0, 0, 15.85), 0.0, false)
-	# Production <-> Warehouse
+	_spawn_door(&"door_entrance", Vector3(0, 0, 16.0), 0.0, false)
 	_spawn_door(&"door_warehouse", Vector3(10, 0, 0), PI * 0.5, false)
-	# Production <-> Office
 	_spawn_door(&"door_office", Vector3(-10, 0, 0), -PI * 0.5, false)
-	# Production <-> Utility
 	_spawn_door(&"door_utility", Vector3(0, 0, -6), 0.0, false)
-	# Office <-> Hall 8 (locked)
 	_spawn_door(&"door_hall8", Vector3(-15, 0, -6), 0.0, true)
-	# North utility exit toward outer
-	_spawn_door(&"door_north", Vector3(0, 0, -15.85), PI, false)
+	_spawn_door(&"door_north", Vector3(0, 0, -16.0), PI, false)
 
 
 func _spawn_door(door_id: StringName, pos: Vector3, rot_y: float, locked: bool) -> void:
@@ -173,49 +223,68 @@ func _spawn_door(door_id: StringName, pos: Vector3, rot_y: float, locked: bool) 
 	door.position = pos
 	door.rotation.y = rot_y
 
-	# Visual panel
+	var frame_mat := _wall_alt_mat
+	var jamb_w := 0.14
+	var frame_depth := WALL_T + 0.08
+	var panel_w := DOOR_W - 0.04
+	var panel_h := DOOR_H - 0.06
+
+	# Полотно двери — почти вплотную к проёму
 	var panel := MeshInstance3D.new()
 	panel.name = "DoorPanel"
 	var box := BoxMesh.new()
-	box.size = Vector3(DOOR_W, DOOR_H, 0.12)
+	box.size = Vector3(panel_w, panel_h, 0.1)
 	panel.mesh = box
-	panel.position = Vector3(0, DOOR_H * 0.5, 0)
+	panel.position = Vector3(0, panel_h * 0.5 + 0.03, 0)
 	panel.material_override = _door_mat
 	door.add_child(panel)
 
-	# Frame
-	for offset_x in [-DOOR_W * 0.5 - 0.1, DOOR_W * 0.5 + 0.1]:
-		var frame := MeshInstance3D.new()
-		var fbox := BoxMesh.new()
-		fbox.size = Vector3(0.2, DOOR_H + 0.2, 0.25)
-		frame.mesh = fbox
-		frame.position = Vector3(offset_x, DOOR_H * 0.5, 0)
-		frame.material_override = _wall_mat
-		door.add_child(frame)
+	# Боковые стойки — перекрывают шов со стеной
+	for side in [-1.0, 1.0]:
+		var jamb := MeshInstance3D.new()
+		var jbox := BoxMesh.new()
+		jbox.size = Vector3(jamb_w, DOOR_H + 0.08, frame_depth)
+		jamb.mesh = jbox
+		jamb.position = Vector3(side * (DOOR_W * 0.5 + jamb_w * 0.35), DOOR_H * 0.5, 0)
+		jamb.material_override = frame_mat
+		door.add_child(jamb)
+
+	# Верхняя перекладина рамы (стык с каменной перемычкой стены)
 	var lintel := MeshInstance3D.new()
 	var lbox := BoxMesh.new()
-	lbox.size = Vector3(DOOR_W + 0.4, 0.2, 0.25)
+	lbox.size = Vector3(DOOR_W + jamb_w * 2.2, 0.18, frame_depth)
 	lintel.mesh = lbox
-	lintel.position = Vector3(0, DOOR_H + 0.1, 0)
-	lintel.material_override = _wall_mat
+	lintel.position = Vector3(0, DOOR_H + 0.02, 0)
+	lintel.material_override = frame_mat
 	door.add_child(lintel)
+
+	# Порог — убирает нижний просвет
+	var sill := MeshInstance3D.new()
+	var sbox := BoxMesh.new()
+	sbox.size = Vector3(DOOR_W + jamb_w * 2.0, 0.06, frame_depth + 0.04)
+	sill.mesh = sbox
+	sill.position = Vector3(0, 0.03, 0)
+	sill.material_override = frame_mat
+	door.add_child(sill)
 
 	# Interaction collider
 	var col := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
-	shape.size = Vector3(DOOR_W + 0.4, DOOR_H, 0.8)
+	shape.size = Vector3(DOOR_W + 0.5, DOOR_H, 0.9)
 	col.shape = shape
 	col.position = Vector3(0, DOOR_H * 0.5, 0)
 	door.add_child(col)
 
-	# Physical blocker when closed
+	# Physical blocker when closed — тонкий, только полотно (не вся толщина стены).
 	var blocker := StaticBody3D.new()
 	blocker.name = "Blocker"
+	blocker.collision_layer = 1
+	blocker.collision_mask = 0
 	var bcol := CollisionShape3D.new()
 	var bshape := BoxShape3D.new()
-	bshape.size = Vector3(DOOR_W, DOOR_H, 0.15)
+	bshape.size = Vector3(panel_w, panel_h, 0.12)
 	bcol.shape = bshape
-	bcol.position = Vector3(0, DOOR_H * 0.5, 0)
+	bcol.position = Vector3(0, panel_h * 0.5 + 0.03, 0)
 	blocker.add_child(bcol)
 	door.add_child(blocker)
 
@@ -223,13 +292,16 @@ func _spawn_door(door_id: StringName, pos: Vector3, rot_y: float, locked: bool) 
 
 
 func _build_lights() -> void:
-	_room_light(Vector3(0, 3.8, 2), Color(1.0, 0.78, 0.5), 2.2, 16.0)      # production
-	_room_light(Vector3(-6, 3.8, 4), Color(1.0, 0.7, 0.4), 1.6, 12.0)
-	_room_light(Vector3(6, 3.8, 4), Color(1.0, 0.7, 0.4), 1.6, 12.0)
-	_room_light(Vector3(15, 3.8, 0), Color(0.85, 0.9, 1.0), 1.8, 14.0)    # warehouse cool
-	_room_light(Vector3(-15, 3.8, 2), Color(1.0, 0.85, 0.6), 1.5, 12.0)   # office
-	_room_light(Vector3(0, 3.8, -11), Color(0.7, 0.85, 1.0), 1.4, 12.0)   # utility
-	_room_light(Vector3(-15, 3.5, -11), Color(1.0, 0.15, 0.08), 1.8, 10.0) # hall8 red
+	# Тёплый складской свет — ближе к референсу
+	_room_light(Vector3(0, 3.9, 2), Color(1.0, 0.9, 0.72), 2.8, 15.0)
+	_room_light(Vector3(-5, 3.9, 5), Color(1.0, 0.88, 0.7), 2.2, 12.0)
+	_room_light(Vector3(5, 3.9, 5), Color(1.0, 0.88, 0.7), 2.2, 12.0)
+	_room_light(Vector3(14.5, 3.9, 2), Color(1.0, 0.94, 0.82), 3.4, 13.0)
+	_room_light(Vector3(17.5, 3.9, -3), Color(1.0, 0.94, 0.82), 3.2, 13.0)
+	_room_light(Vector3(15.5, 3.9, -7), Color(1.0, 0.92, 0.8), 2.8, 12.0)
+	_room_light(Vector3(-15, 3.8, 2), Color(1.0, 0.9, 0.75), 2.0, 11.0)
+	_room_light(Vector3(0, 3.8, -11), Color(0.85, 0.9, 1.0), 1.8, 11.0)
+	_room_light(Vector3(-15, 3.5, -11), Color(1.0, 0.2, 0.1), 1.4, 9.0)
 
 
 func _room_light(at: Vector3, color: Color, energy: float, range_m: float) -> void:
