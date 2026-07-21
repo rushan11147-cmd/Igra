@@ -121,15 +121,70 @@ func add_collision_only(parent: Node3D, pos: Vector3, size: Vector3) -> void:
 	parent.add_child(body)
 
 
+## Builds a floor slab with rectangular shaft holes (stairwells / elevators).
+func add_floor_slab_with_holes(
+	parent: Node3D,
+	rect: Rect2,
+	y: float,
+	mat: Material,
+	holes: Array[Rect2]
+) -> void:
+	var pieces: Array[Rect2] = [rect]
+	for hole in holes:
+		var next_pieces: Array[Rect2] = []
+		for piece in pieces:
+			next_pieces.append_array(_subtract_rect(piece, hole))
+		pieces = next_pieces
+	for piece in pieces:
+		if piece.size.x < 0.05 or piece.size.y < 0.05:
+			continue
+		add_floor_slab(parent, piece, y, mat)
+
+
+func _subtract_rect(base: Rect2, hole: Rect2) -> Array[Rect2]:
+	var cut := base.intersection(hole)
+	if cut.size.x <= 0.01 or cut.size.y <= 0.01:
+		return [base]
+	var parts: Array[Rect2] = []
+	# Left
+	if cut.position.x > base.position.x + 0.01:
+		parts.append(Rect2(base.position.x, base.position.y, cut.position.x - base.position.x, base.size.y))
+	# Right
+	var cut_right := cut.position.x + cut.size.x
+	var base_right := base.position.x + base.size.x
+	if cut_right < base_right - 0.01:
+		parts.append(Rect2(cut_right, base.position.y, base_right - cut_right, base.size.y))
+	# Bottom (smaller Z)
+	if cut.position.y > base.position.y + 0.01:
+		parts.append(Rect2(cut.position.x, base.position.y, cut.size.x, cut.position.y - base.position.y))
+	# Top (larger Z)
+	var cut_top := cut.position.y + cut.size.y
+	var base_top := base.position.y + base.size.y
+	if cut_top < base_top - 0.01:
+		parts.append(Rect2(cut.position.x, cut_top, cut.size.x, base_top - cut_top))
+	return parts
+
+
 func add_ceiling(parent: Node3D, rect: Rect2, y: float, mat: Material) -> void:
 	var cx := rect.position.x + rect.size.x * 0.5
 	var cz := rect.position.y + rect.size.y * 0.5
 	add_box(parent, Vector3(cx, y + WALL_H + CEIL_T * 0.5, cz), Vector3(rect.size.x, CEIL_T, rect.size.y), mat, true, true)
 
 
-## Opening dict: { "along_x": bool, "fixed": float, "mid": float, "width": float }
+## Opening dict: { "along_x": bool, "fixed": float, "mid": float, "width": float, "full_height": bool }
 func collect_world_openings(rooms: Array) -> Array[Dictionary]:
 	var result: Array[Dictionary] = []
+	var shaft_edges: Dictionary = {}
+	for room_data in rooms:
+		var role: StringName = room_data["role"]
+		if role != &"stairwell" and role != &"elevator":
+			continue
+		var r: Rect2 = room_data["rect"]
+		shaft_edges["x:%.3f" % r.position.x] = true
+		shaft_edges["x:%.3f" % (r.position.x + r.size.x)] = true
+		shaft_edges["z:%.3f" % r.position.y] = true
+		shaft_edges["z:%.3f" % (r.position.y + r.size.y)] = true
+
 	for room_data in rooms:
 		var rect: Rect2 = room_data["rect"]
 		var openings: Array = room_data.get("openings", [])
@@ -141,15 +196,25 @@ func collect_world_openings(rooms: Array) -> Array[Dictionary]:
 			var wall: StringName = StringName(item.get("wall", &""))
 			var t: float = float(item.get("t", 0.5))
 			var w: float = float(item.get("w", DOOR_W))
+			var full_h := bool(item.get("full_height", false))
+			# Openings into a shaft must be full-height so headers don't seal the well.
 			match wall:
 				&"s":
-					result.append({"along_x": true, "fixed": z0, "mid": lerpf(x0, x1, t), "width": w})
+					if shaft_edges.has("z:%.3f" % z0):
+						full_h = true
+					result.append({"along_x": true, "fixed": z0, "mid": lerpf(x0, x1, t), "width": w, "full_height": full_h})
 				&"n":
-					result.append({"along_x": true, "fixed": z1, "mid": lerpf(x0, x1, t), "width": w})
+					if shaft_edges.has("z:%.3f" % z1):
+						full_h = true
+					result.append({"along_x": true, "fixed": z1, "mid": lerpf(x0, x1, t), "width": w, "full_height": full_h})
 				&"w":
-					result.append({"along_x": false, "fixed": x0, "mid": lerpf(z0, z1, t), "width": w})
+					if shaft_edges.has("x:%.3f" % x0):
+						full_h = true
+					result.append({"along_x": false, "fixed": x0, "mid": lerpf(z0, z1, t), "width": w, "full_height": full_h})
 				&"e":
-					result.append({"along_x": false, "fixed": x1, "mid": lerpf(z0, z1, t), "width": w})
+					if shaft_edges.has("x:%.3f" % x1):
+						full_h = true
+					result.append({"along_x": false, "fixed": x1, "mid": lerpf(z0, z1, t), "width": w, "full_height": full_h})
 	return result
 
 
@@ -181,6 +246,24 @@ func add_room_shell(
 	_wall_with_openings(parent, false, x1, z0, z1, y, wall_mat, openings, &"e", world_openings)
 
 
+func add_room_walls_only(
+	parent: Node3D,
+	rect: Rect2,
+	y: float,
+	wall_mat: Material,
+	openings: Array,
+	world_openings: Array = []
+) -> void:
+	var x0 := rect.position.x
+	var z0 := rect.position.y
+	var x1 := x0 + rect.size.x
+	var z1 := z0 + rect.size.y
+	_wall_with_openings(parent, true, z0, x0, x1, y, wall_mat, openings, &"s", world_openings)
+	_wall_with_openings(parent, true, z1, x0, x1, y, wall_mat, openings, &"n", world_openings)
+	_wall_with_openings(parent, false, x0, z0, z1, y, wall_mat, openings, &"w", world_openings)
+	_wall_with_openings(parent, false, x1, z0, z1, y, wall_mat, openings, &"e", world_openings)
+
+
 func _wall_with_openings(
 	parent: Node3D,
 	along_x: bool,
@@ -201,7 +284,11 @@ func _wall_with_openings(
 		var t: float = float(item.get("t", 0.5))
 		var w: float = float(item.get("w", DOOR_W))
 		var mid := lerpf(a0, a1, t)
-		gaps.append({"mid": mid, "half": w * 0.5})
+		gaps.append({
+			"mid": mid,
+			"half": w * 0.5,
+			"full_height": bool(item.get("full_height", false)),
+		})
 
 	# Also cut holes for openings declared by neighboring rooms on this same wall plane.
 	for wo in world_openings:
@@ -213,7 +300,11 @@ func _wall_with_openings(
 		if mid2 < a0 - 0.05 or mid2 > a1 + 0.05:
 			continue
 		var half2: float = float(wo.get("width", DOOR_W)) * 0.5
-		gaps.append({"mid": mid2, "half": half2})
+		gaps.append({
+			"mid": mid2,
+			"half": half2,
+			"full_height": bool(wo.get("full_height", false)),
+		})
 
 	if gaps.is_empty():
 		_solid_wall_segment(parent, along_x, fixed, a0, a1, y, mat)
@@ -231,7 +322,9 @@ func _wall_with_openings(
 		if left > cursor + 0.05:
 			_solid_wall_segment(parent, along_x, fixed, cursor, left, y, mat)
 		if right > left + 0.05:
-			_door_header(parent, along_x, fixed, (left + right) * 0.5, right - left, y, mat)
+			# Skip door header for full-height shaft openings (headers were the "partitions").
+			if not bool(g.get("full_height", false)):
+				_door_header(parent, along_x, fixed, (left + right) * 0.5, right - left, y, mat)
 		cursor = maxf(cursor, right)
 	if a1 > cursor + 0.05:
 		_solid_wall_segment(parent, along_x, fixed, cursor, a1, y, mat)
@@ -253,6 +346,7 @@ func _merge_overlapping_gaps(gaps: Array[Dictionary]) -> Array[Dictionary]:
 			var new_right := maxf(cur_right, g_right)
 			cur["mid"] = (new_left + new_right) * 0.5
 			cur["half"] = (new_right - new_left) * 0.5
+			cur["full_height"] = bool(cur.get("full_height", false)) or bool(g.get("full_height", false))
 		else:
 			merged.append(cur)
 			cur = g.duplicate()

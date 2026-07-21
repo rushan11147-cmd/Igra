@@ -30,13 +30,20 @@ func _build_level() -> void:
 	var build_ceiling: bool = bool(layout.get("build_ceiling", true))
 	var rooms: Array = layout.get("rooms", [])
 	var world_openings: Array = _builder.collect_world_openings(rooms)
-	var shaft_holes: Array = []
 
+	# Open vertical shafts: no footprint collision through stairwells / elevators.
+	var shaft_holes: Array = []
+	var shaft_edges: Dictionary = {}
 	for room_data in rooms:
 		var role: StringName = room_data["role"]
-		# Footprint collision must not seal stair/elevator shafts.
-		if role == &"elevator" or role == &"stairwell":
-			shaft_holes.append(room_data["rect"])
+		if role != &"stairwell" and role != &"elevator":
+			continue
+		var r: Rect2 = room_data["rect"]
+		shaft_holes.append(r)
+		shaft_edges["x:%.3f" % r.position.x] = true
+		shaft_edges["x:%.3f" % (r.position.x + r.size.x)] = true
+		shaft_edges["z:%.3f" % r.position.y] = true
+		shaft_edges["z:%.3f" % (r.position.y + r.size.y)] = true
 
 	# Collision only — visible floor comes from room slabs (no z-fight flicker).
 	if shaft_holes.is_empty():
@@ -50,26 +57,31 @@ func _build_level() -> void:
 		var openings: Array = room_data.get("openings", [])
 		var wall_mat = _palette.wall_for_role(role)
 		var floor_mat = _palette.floor_for_role(role)
-		var is_elevator := role == &"elevator"
-		var is_stairwell := role == &"stairwell"
+		var is_shaft := role == &"stairwell" or role == &"elevator"
 		var room_root := Node3D.new()
 		room_root.name = String(room_data.get("id", "room"))
 		add_child(room_root)
-		_builder.add_room_shell(
-			room_root,
-			rect,
-			y,
-			wall_mat,
-			floor_mat,
-			_palette.concrete_dark,
-			openings,
-			build_ceiling and role != &"roof" and not is_elevator and not is_stairwell,
-			world_openings,
-			not is_elevator and not is_stairwell
-		)
-		_props.fill_room(room_root, rect, y, role)
-		if role == &"glass_bridge":
-			_add_glass_panels(room_root, rect, y)
+
+		if is_shaft:
+			# No floor, ceiling, or walls — shaft is empty. Stairs come from VerticalLinks.
+			_props.fill_room(room_root, rect, y, role)
+		else:
+			var fixed_openings := _mark_shaft_border_openings(rect, openings, shaft_edges)
+			_builder.add_room_shell(
+				room_root,
+				rect,
+				y,
+				wall_mat,
+				floor_mat,
+				_palette.concrete_dark,
+				fixed_openings,
+				build_ceiling and role != &"roof",
+				world_openings,
+				true
+			)
+			_props.fill_room(room_root, rect, y, role)
+			if role == &"glass_bridge":
+				_add_glass_panels(room_root, rect, y)
 
 	var markers: Dictionary = layout.get("markers", {})
 	for marker_name in markers:
@@ -77,6 +89,34 @@ func _build_level() -> void:
 		m.name = String(marker_name)
 		m.position = markers[marker_name]
 		_markers_root.add_child(m)
+
+
+## Openings on walls shared with a stair/elevator shaft must be full-height
+## (otherwise door headers form horizontal partitions across the shaft).
+func _mark_shaft_border_openings(rect: Rect2, openings: Array, shaft_edges: Dictionary) -> Array:
+	var x0 := rect.position.x
+	var z0 := rect.position.y
+	var x1 := x0 + rect.size.x
+	var z1 := z0 + rect.size.y
+	var result: Array = []
+	for item in openings:
+		var copy: Dictionary = item.duplicate()
+		var wall: StringName = StringName(copy.get("wall", &""))
+		var on_shaft := false
+		match wall:
+			&"w":
+				on_shaft = shaft_edges.has("x:%.3f" % x0)
+			&"e":
+				on_shaft = shaft_edges.has("x:%.3f" % x1)
+			&"s":
+				on_shaft = shaft_edges.has("z:%.3f" % z0)
+			&"n":
+				on_shaft = shaft_edges.has("z:%.3f" % z1)
+		if on_shaft:
+			copy["full_height"] = true
+			copy["w"] = maxf(float(copy.get("w", 2.8)), 3.2)
+		result.append(copy)
+	return result
 
 
 func _add_glass_panels(parent: Node3D, rect: Rect2, y: float) -> void:

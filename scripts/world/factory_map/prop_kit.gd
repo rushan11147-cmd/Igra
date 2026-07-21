@@ -113,7 +113,9 @@ func fill_room(parent: Node3D, rect: Rect2, y: float, role: StringName) -> void:
 			_tank(props, Vector3(cx + 8.0, y, cz + 4.0), 2.8)
 			_railing(props, Vector3(cx, y + 1.0, cz + rect.size.y * 0.4), rect.size.x * 0.7)
 			_pipe_run(props, Vector3(cx, y + 0.6, cz), rect.size.x * 0.8, true)
-		&"stairwell", &"elevator":
+		&"stairwell":
+			_lamp(props, Vector3(cx, y + 3.5, cz), Color(1.0, 0.85, 0.5), 1.0)
+		&"elevator":
 			_railing(props, Vector3(cx + 1.2, y + 1.0, cz), 3.0)
 			_lamp(props, Vector3(cx, y + 3.5, cz), Color(1.0, 0.85, 0.5), 1.0)
 		_:

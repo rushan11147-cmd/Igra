@@ -33,6 +33,8 @@ func _process(delta: float) -> void:
 
 
 func _on_shift_started(night: int) -> void:
+	# TODO: временно отключено для отладки лестниц
+	return
 	# New run — allow screamer again
 	if night == 1:
 		_fired = false
