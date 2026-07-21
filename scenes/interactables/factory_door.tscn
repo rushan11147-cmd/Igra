@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3 uid="uid://factorydoor001"]
+
+[ext_resource type="Script" path="res://scripts/interactables/factory_door.gd" id="1"]
+
+[node name="FactoryDoor" type="Area3D"]
+collision_layer = 4
+collision_mask = 0
+monitoring = true
+monitorable = true
+script = ExtResource("1")

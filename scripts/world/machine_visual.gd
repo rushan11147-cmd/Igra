@@ -57,14 +57,28 @@ func _build_mesh() -> void:
 
 
 func _build_reactor() -> void:
-	var tank_path := "res://assets/models/industrial/glb/detail-tank.glb"
-	if ResourceLoader.exists(tank_path):
-		var scene: PackedScene = load(tank_path)
-		if scene:
-			var tank := scene.instantiate() as Node3D
-			tank.scale = Vector3(1.4, 1.4, 1.4)
-			tank.rotation.y = 0.4
-			add_child(tank)
+	# Prefer Megascans large industrial hardware over Kenney tank
+	var tank_ids := ["wbuidixga", "villceo", "vgyiedcaw"]
+	var placed := false
+	for asset_id in tank_ids:
+		var path := WarehouseCatalog.fbx_path(asset_id)
+		if ResourceLoader.exists(path):
+			var scene: PackedScene = load(path)
+			if scene:
+				var tank := scene.instantiate() as Node3D
+				tank.scale = Vector3(0.015, 0.015, 0.015)
+				tank.rotation.y = 0.4
+				add_child(tank)
+				placed = true
+				break
+	if not placed:
+		var tank_path := "res://assets/models/industrial/glb/detail-tank.glb"
+		if ResourceLoader.exists(tank_path):
+			var scene2: PackedScene = load(tank_path)
+			if scene2:
+				var tank2 := scene2.instantiate() as Node3D
+				tank2.scale = Vector3(1.4, 1.4, 1.4)
+				add_child(tank2)
 
 	var core := MeshInstance3D.new()
 	var cyl := CylinderMesh.new()
