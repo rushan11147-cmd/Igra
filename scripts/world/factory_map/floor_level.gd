@@ -30,8 +30,19 @@ func _build_level() -> void:
 	var build_ceiling: bool = bool(layout.get("build_ceiling", true))
 	var rooms: Array = layout.get("rooms", [])
 	var world_openings: Array = _builder.collect_world_openings(rooms)
+	var shaft_holes: Array = []
 
-	_builder.add_floor_slab(self, LayoutDataScript.FOOTPRINT, y, _palette.concrete_dark)
+	for room_data in rooms:
+		var role: StringName = room_data["role"]
+		# Footprint collision must not seal stair/elevator shafts.
+		if role == &"elevator" or role == &"stairwell":
+			shaft_holes.append(room_data["rect"])
+
+	# Collision only — visible floor comes from room slabs (no z-fight flicker).
+	if shaft_holes.is_empty():
+		_builder.add_floor_collision(self, LayoutDataScript.FOOTPRINT, y)
+	else:
+		_builder.add_floor_collision_with_holes(self, LayoutDataScript.FOOTPRINT, y, shaft_holes)
 
 	for room_data in rooms:
 		var rect: Rect2 = room_data["rect"]
@@ -39,6 +50,8 @@ func _build_level() -> void:
 		var openings: Array = room_data.get("openings", [])
 		var wall_mat = _palette.wall_for_role(role)
 		var floor_mat = _palette.floor_for_role(role)
+		var is_elevator := role == &"elevator"
+		var is_stairwell := role == &"stairwell"
 		var room_root := Node3D.new()
 		room_root.name = String(room_data.get("id", "room"))
 		add_child(room_root)
@@ -50,8 +63,9 @@ func _build_level() -> void:
 			floor_mat,
 			_palette.concrete_dark,
 			openings,
-			build_ceiling and role != &"roof",
-			world_openings
+			build_ceiling and role != &"roof" and not is_elevator and not is_stairwell,
+			world_openings,
+			not is_elevator and not is_stairwell
 		)
 		_props.fill_room(room_root, rect, y, role)
 		if role == &"glass_bridge":

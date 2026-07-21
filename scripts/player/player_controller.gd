@@ -35,6 +35,9 @@ var _hiding_spot: HidingSpot = null
 func _ready() -> void:
 	add_to_group("player")
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	floor_snap_length = 0.35
+	safe_margin = 0.08
+	floor_max_angle = deg_to_rad(50.0)
 	if not head:
 		head = $Head
 	if not camera:
@@ -47,6 +50,17 @@ func _ready() -> void:
 		camera.add_to_group("player_camera")
 		camera.fov = SettingsManager.fov
 	SettingsManager.settings_changed.connect(_on_settings_changed)
+	# Prevent falling through during heavy first-frame map setup.
+	set_physics_process(false)
+	call_deferred("_enable_physics_after_map")
+
+
+func _enable_physics_after_map() -> void:
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+	velocity = Vector3.ZERO
+	set_physics_process(true)
 
 
 func _on_settings_changed() -> void:

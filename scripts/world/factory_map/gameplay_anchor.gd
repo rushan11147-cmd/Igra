@@ -3,6 +3,7 @@ extends Node3D
 
 @export var marker_name: String = ""
 @export var target_path: NodePath = NodePath("..")
+@export var height_offset: float = 0.35
 
 
 func _ready() -> void:
@@ -12,6 +13,10 @@ func _ready() -> void:
 func _snap() -> void:
 	if marker_name.is_empty():
 		return
+	# Wait until FactoryMap geometry is in the physics world.
+	await get_tree().physics_frame
+	await get_tree().physics_frame
+
 	var factory_map := _find_factory_map()
 	if factory_map == null:
 		return
@@ -19,19 +24,31 @@ func _snap() -> void:
 	if factory_map.has_method("find_marker"):
 		marker = factory_map.find_marker(marker_name)
 	if marker == null:
+		marker = get_tree().root.find_child(marker_name, true, false) as Marker3D
+	if marker == null:
 		return
+
 	var target := get_node_or_null(target_path) as Node3D
 	if target == null:
 		target = get_parent() as Node3D
 	if target == null:
 		return
-	target.global_position = marker.global_position
+
+	var pos := marker.global_position
+	pos.y += height_offset
+	target.global_position = pos
+	if target is CharacterBody3D:
+		var body := target as CharacterBody3D
+		body.velocity = Vector3.ZERO
+		body.floor_snap_length = 0.4
+		# Force a grounded check after teleport.
+		body.move_and_slide()
 
 
 func _find_factory_map() -> Node:
 	var n: Node = self
 	while n:
-		if n.name == "FactoryMap":
+		if n.is_in_group("factory_map") or n.name == "FactoryMap":
 			return n
 		var scr: Script = n.get_script() as Script
 		if scr != null and scr.resource_path.ends_with("factory_map.gd"):

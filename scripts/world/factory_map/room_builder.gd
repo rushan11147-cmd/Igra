@@ -6,7 +6,7 @@ const WALL_T := 0.3
 const CEIL_T := 0.18
 const DOOR_W := 2.8
 const DOOR_H := 2.7
-const FLOOR_T := 0.2
+const FLOOR_T := 0.8
 const OPENING_MATCH_EPS := 0.35
 
 
@@ -27,6 +27,8 @@ func add_box(
 	if with_collision:
 		var body := StaticBody3D.new()
 		body.position = pos
+		body.collision_layer = 1
+		body.collision_mask = 0
 		var col := CollisionShape3D.new()
 		var shape := BoxShape3D.new()
 		shape.size = size
@@ -51,7 +53,72 @@ func add_box(
 func add_floor_slab(parent: Node3D, rect: Rect2, y: float, mat: Material) -> void:
 	var cx := rect.position.x + rect.size.x * 0.5
 	var cz := rect.position.y + rect.size.y * 0.5
-	add_box(parent, Vector3(cx, y - FLOOR_T * 0.5, cz), Vector3(rect.size.x, FLOOR_T, rect.size.y), mat, true, false)
+	# Thick collision only — textured top plane so stairwells don't show a patterned "ceiling".
+	add_collision_only(parent, Vector3(cx, y - FLOOR_T * 0.5, cz), Vector3(rect.size.x, FLOOR_T, rect.size.y))
+	var visual := MeshInstance3D.new()
+	var plane := PlaneMesh.new()
+	plane.size = Vector2(rect.size.x, rect.size.y)
+	visual.mesh = plane
+	visual.material_override = mat
+	visual.position = Vector3(cx, y + 0.01, cz)
+	parent.add_child(visual)
+
+
+## Collision without a mesh — avoids z-fighting when stacked under room floors.
+func add_floor_collision(parent: Node3D, rect: Rect2, y: float) -> void:
+	var cx := rect.position.x + rect.size.x * 0.5
+	var cz := rect.position.y + rect.size.y * 0.5
+	add_collision_only(parent, Vector3(cx, y - FLOOR_T * 0.5, cz), Vector3(rect.size.x, FLOOR_T, rect.size.y))
+
+
+func add_floor_collision_with_holes(parent: Node3D, footprint: Rect2, y: float, holes: Array) -> void:
+	var pieces: Array = [footprint]
+	for hole_variant in holes:
+		var hole: Rect2 = hole_variant
+		var next_pieces: Array = []
+		for piece_variant in pieces:
+			var piece: Rect2 = piece_variant
+			next_pieces.append_array(_subtract_rect(piece, hole))
+		pieces = next_pieces
+	for piece_variant in pieces:
+		var piece: Rect2 = piece_variant
+		if piece.size.x > 0.2 and piece.size.y > 0.2:
+			add_floor_collision(parent, piece, y)
+
+
+func _subtract_rect(base: Rect2, hole: Rect2) -> Array:
+	var cut := base.intersection(hole)
+	if cut.size.x <= 0.01 or cut.size.y <= 0.01:
+		return [base]
+	var out: Array = []
+	var left := cut.position.x - base.position.x
+	if left > 0.05:
+		out.append(Rect2(base.position.x, base.position.y, left, base.size.y))
+	var right := (base.position.x + base.size.x) - (cut.position.x + cut.size.x)
+	if right > 0.05:
+		out.append(Rect2(cut.position.x + cut.size.x, base.position.y, right, base.size.y))
+	var mid_x := cut.position.x
+	var mid_w := cut.size.x
+	var bottom := cut.position.y - base.position.y
+	if bottom > 0.05:
+		out.append(Rect2(mid_x, base.position.y, mid_w, bottom))
+	var top := (base.position.y + base.size.y) - (cut.position.y + cut.size.y)
+	if top > 0.05:
+		out.append(Rect2(mid_x, cut.position.y + cut.size.y, mid_w, top))
+	return out
+
+
+func add_collision_only(parent: Node3D, pos: Vector3, size: Vector3) -> void:
+	var body := StaticBody3D.new()
+	body.position = pos
+	body.collision_layer = 1
+	body.collision_mask = 0
+	var col := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = size
+	col.shape = shape
+	body.add_child(col)
+	parent.add_child(body)
 
 
 func add_ceiling(parent: Node3D, rect: Rect2, y: float, mat: Material) -> void:
@@ -95,9 +162,11 @@ func add_room_shell(
 	ceil_mat: Material,
 	openings: Array,
 	build_ceiling: bool = true,
-	world_openings: Array = []
+	world_openings: Array = [],
+	build_floor: bool = true
 ) -> void:
-	add_floor_slab(parent, rect, y, floor_mat)
+	if build_floor:
+		add_floor_slab(parent, rect, y, floor_mat)
 	if build_ceiling:
 		add_ceiling(parent, rect, y, ceil_mat)
 

@@ -67,21 +67,22 @@ func _build_navigation() -> void:
 	var region := NavigationRegion3D.new()
 	region.name = "NavigationRegion3D"
 	var mesh := NavigationMesh.new()
-	mesh.cell_size = 0.25
-	mesh.cell_height = 0.25
+	mesh.cell_size = 0.5
+	mesh.cell_height = 0.5
 	mesh.agent_height = 1.8
 	mesh.agent_radius = 0.4
-	mesh.agent_max_climb = 0.4
+	mesh.agent_max_climb = 0.5
 	mesh.agent_max_slope = 45.0
 	region.navigation_mesh = mesh
 	add_child(region)
-	call_deferred("_bake_navigation", region)
+	# Full bake of the whole multi-floor map freezes the first frames and
+	# lets CharacterBody3D tunnel through thin floors. Bake later / lighter.
+	call_deferred("_add_safety_floor")
 
 
-func _bake_navigation(region: NavigationRegion3D) -> void:
-	if region == null or region.navigation_mesh == null:
-		return
-	region.bake_navigation_mesh(false)
+func _add_safety_floor() -> void:
+	# Thick catch-all under floor 1 — collision only (no mesh = no flicker).
+	_builder.add_collision_only(self, Vector3(0.0, -0.6, 0.0), Vector3(140.0, 1.2, 140.0))
 
 
 func _register_area_nodes() -> void:
