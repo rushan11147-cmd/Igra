@@ -66,11 +66,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		head.rotate_x(-event.relative.y * sens)
 		head.rotation.x = clampf(head.rotation.x, deg_to_rad(-89.0), deg_to_rad(89.0))
 
-	if event.is_action_pressed("ui_cancel"):
-		if Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-		else:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+	# ESC обрабатывает PauseMenu (пауза / закрытие меню).
 
 	if event.is_action_pressed("tablet"):
 		EventBus.tablet_toggle_requested.emit()

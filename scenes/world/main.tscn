@@ -1,4 +1,4 @@
-[gd_scene load_steps=30 format=3 uid="uid://main001"]
+[gd_scene load_steps=31 format=3 uid="uid://main001"]
 
 [ext_resource type="Script" path="res://scripts/world/main.gd" id="1"]
 [ext_resource type="PackedScene" uid="uid://player001" path="res://scenes/player/player.tscn" id="2"]
@@ -14,6 +14,7 @@
 [ext_resource type="Script" path="res://scripts/interactables/document_pickup.gd" id="12"]
 [ext_resource type="Script" path="res://scripts/world/factory_area.gd" id="13"]
 [ext_resource type="PackedScene" uid="uid://shiftchoice001" path="res://scenes/ui/shift_choice.tscn" id="14"]
+[ext_resource type="PackedScene" uid="uid://pausemenu001" path="res://scenes/ui/pause_menu.tscn" id="19"]
 [ext_resource type="Script" path="res://scripts/interactables/hall8_door.gd" id="15"]
 [ext_resource type="PackedScene" uid="uid://factoryenv001" path="res://scenes/world/factory_environment.tscn" id="16"]
 [ext_resource type="PackedScene" uid="uid://factoryinterior001" path="res://scenes/world/factory_interior.tscn" id="17"]
@@ -262,3 +263,5 @@ volume_db = -16.0
 [node name="Tablet" parent="." instance=ExtResource("10")]
 
 [node name="ShiftChoice" parent="." instance=ExtResource("14")]
+
+[node name="PauseMenu" parent="." instance=ExtResource("19")]

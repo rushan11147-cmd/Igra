@@ -148,7 +148,7 @@ func _process(delta: float) -> void:
 
 
 func pause_shift() -> void:
-	if game_state == GameState.SHIFT:
+	if game_state in [GameState.SHIFT, GameState.BRIEFING]:
 		game_state = GameState.PAUSED
 		get_tree().paused = true
 
