@@ -25,47 +25,28 @@ func _ready() -> void:
 
 
 func _build_materials() -> void:
-	# Чистый бетон/металл под Forward+ (без prop-атласов).
-	_wall_mat = _make_surface(Color(0.62, 0.59, 0.54), 0.88, 0.02, 0.28)
-	_wall_alt_mat = _make_surface(Color(0.48, 0.49, 0.5), 0.68, 0.4, 0.32)
-	_floor_mat = _make_surface(Color(0.55, 0.52, 0.47), 0.94, 0.0, 0.18)
-	_ceil_mat = _make_surface(Color(0.34, 0.33, 0.32), 0.9, 0.05, 0.4)
-	_door_mat = StandardMaterial3D.new()
-	_door_mat.albedo_color = Color(0.3, 0.26, 0.22)
-	_door_mat.metallic = 0.5
-	_door_mat.roughness = 0.48
+	# Простые цвета без текстур.
+	_wall_mat = _make_flat(Color(0.55, 0.52, 0.48), 0.9, 0.02)
+	_wall_alt_mat = _make_flat(Color(0.42, 0.43, 0.45), 0.7, 0.35)
+	_floor_mat = _make_flat(Color(0.48, 0.45, 0.4), 0.95, 0.0)
+	_ceil_mat = _make_flat(Color(0.28, 0.27, 0.26), 0.9, 0.05)
+	_door_mat = _make_flat(Color(0.28, 0.24, 0.2), 0.45, 0.55)
 
 
-func _make_surface(color: Color, roughness: float, metallic: float, noise_scale: float) -> StandardMaterial3D:
+func _make_flat(color: Color, roughness: float, metallic: float) -> StandardMaterial3D:
 	var mat := StandardMaterial3D.new()
 	mat.albedo_color = color
 	mat.roughness = roughness
 	mat.metallic = metallic
-	mat.uv1_triplanar = true
-	mat.uv1_world_triplanar = true
-	mat.uv1_triplanar_sharpness = 8.0
-	mat.uv1_scale = Vector3(noise_scale, noise_scale, noise_scale)
-
-	var noise := FastNoiseLite.new()
-	noise.seed = int(color.r * 1000.0 + color.g * 100.0)
-	noise.frequency = 0.02
-	noise.fractal_octaves = 2
-	noise.fractal_gain = 0.4
-
-	var ntex := NoiseTexture2D.new()
-	ntex.width = 256
-	ntex.height = 256
-	ntex.seamless = true
-	ntex.noise = noise
-	# Слабый шум — не «шумовой ковёр», а лёгкая неоднородность бетона.
-	mat.albedo_texture = ntex
-	mat.albedo_color = color.lerp(Color.WHITE, 0.08)
 	return mat
 
 
-func _make_pbr(asset_id: String, fallback: Color, uv_scale: float) -> StandardMaterial3D:
-	# Оставлено для совместимости; для стен не использовать prop-атласы.
-	return _make_surface(fallback, 0.85, 0.05, 1.0 / maxf(uv_scale, 0.1))
+func _make_surface(color: Color, roughness: float, metallic: float, _noise_scale: float) -> StandardMaterial3D:
+	return _make_flat(color, roughness, metallic)
+
+
+func _make_pbr(_asset_id: String, fallback: Color, _uv_scale: float) -> StandardMaterial3D:
+	return _make_flat(fallback, 0.85, 0.05)
 
 
 func _build_rooms() -> void:

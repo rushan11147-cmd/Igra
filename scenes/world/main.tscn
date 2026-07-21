@@ -19,17 +19,11 @@
 [ext_resource type="PackedScene" uid="uid://7fg8o5u4lo2c" path="res://scenes/world/factory_interior.tscn" id="17"]
 [ext_resource type="Script" uid="uid://8domajea8bs1" path="res://scripts/world/machine_visual.gd" id="18"]
 [ext_resource type="PackedScene" uid="uid://pausemenu001" path="res://scenes/ui/pause_menu.tscn" id="19"]
-[ext_resource type="Script" path="res://scripts/interactables/key_pickup.gd" id="20"]
-[ext_resource type="Script" path="res://scripts/world/warehouse_showcase_light.gd" id="21"]
+[ext_resource type="Script" uid="uid://c8bdvvwx3xxsr" path="res://scripts/interactables/key_pickup.gd" id="20"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
-sky_top_color = Color(0.42, 0.55, 0.72, 1)
-sky_horizon_color = Color(0.72, 0.7, 0.62, 1)
-sky_curve = 0.08
-ground_bottom_color = Color(0.18, 0.16, 0.14, 1)
-ground_horizon_color = Color(0.4, 0.38, 0.34, 1)
-sun_angle_max = 35.0
-sun_curve = 0.12
+sky_top_color = Color(0.02, 0.02, 0.05, 1)
+sky_horizon_color = Color(0.05, 0.05, 0.08, 1)
 
 [sub_resource type="Sky" id="Sky_1"]
 sky_material = SubResource("ProceduralSkyMaterial_1")
@@ -37,51 +31,19 @@ sky_material = SubResource("ProceduralSkyMaterial_1")
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 2
 sky = SubResource("Sky_1")
-ambient_light_source = 3
-ambient_light_color = Color(0.55, 0.52, 0.48, 1)
-ambient_light_energy = 0.35
-ambient_light_sky_contribution = 0.65
-tonemap_mode = 3
-tonemap_exposure = 1.0
-tonemap_white = 6.0
-ssao_enabled = true
-ssao_radius = 1.2
-ssao_intensity = 2.2
-ssil_enabled = true
-ssil_intensity = 1.0
-sdfgi_enabled = true
-sdfgi_use_occlusion = true
+ambient_light_source = 2
+ambient_light_color = Color(0.15, 0.15, 0.2, 1)
+ambient_light_energy = 0.3
+tonemap_mode = 2
 glow_enabled = true
-glow_intensity = 0.45
-glow_bloom = 0.12
-glow_hdr_threshold = 0.9
-fog_enabled = true
-fog_light_color = Color(0.7, 0.68, 0.62, 1)
-fog_density = 0.0025
-fog_aerial_perspective = 0.25
-fog_sky_affect = 0.35
-volumetric_fog_enabled = true
-volumetric_fog_density = 0.018
-volumetric_fog_albedo = Color(0.75, 0.72, 0.68, 1)
-volumetric_fog_emission = Color(0.15, 0.14, 0.12, 1)
-volumetric_fog_anisotropy = 0.35
-volumetric_fog_length = 40.0
-volumetric_fog_ambient_inject = 0.25
-adjustment_enabled = true
-adjustment_brightness = 1.05
-adjustment_contrast = 1.08
-adjustment_saturation = 0.98
+glow_intensity = 0.5
 
 [sub_resource type="BoxMesh" id="BoxMesh_floor"]
 size = Vector3(80, 0.2, 80)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor"]
-albedo_color = Color(0.52, 0.49, 0.44, 1)
-roughness = 0.92
-metallic = 0.0
-uv1_triplanar = true
-uv1_world_triplanar = true
-uv1_scale = Vector3(0.2, 0.2, 0.2)
+albedo_color = Color(0.15, 0.15, 0.17, 1)
+roughness = 0.95
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
 size = Vector3(80, 0.2, 80)
@@ -113,18 +75,14 @@ script = ExtResource("1")
 environment = SubResource("Environment_1")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1958274233]
-transform = Transform3D(0.766, -0.492, 0.413, 0, 0.643, 0.766, -0.643, -0.586, 0.492, 10, 22, 8)
-light_color = Color(1, 0.95, 0.86, 1)
-light_energy = 0.55
+transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 0, 10, 0)
+light_color = Color(0.7, 0.75, 0.85, 1)
+light_energy = 0.3
 shadow_enabled = true
-directional_shadow_mode = 1
 
 [node name="Factory" type="Node3D" parent="." unique_id=1167207831]
 
 [node name="FactoryEnvironment" parent="Factory" unique_id=530613298 instance=ExtResource("16")]
-
-[node name="WarehouseShowcaseLight" type="Node3D" parent="Factory"]
-script = ExtResource("21")
 
 [node name="FactoryInterior" parent="Factory" unique_id=1717916751 instance=ExtResource("17")]
 
@@ -139,49 +97,33 @@ surface_material_override/0 = SubResource("StandardMaterial3D_floor")
 shape = SubResource("BoxShape3D_floor")
 
 [node name="CeilingLight1" type="OmniLight3D" parent="Factory" unique_id=1907208388]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.1, 2)
-light_color = Color(1, 0.92, 0.78, 1)
-light_energy = 3.2
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, 0)
+light_color = Color(1, 0.85, 0.65, 1)
+light_energy = 2.0
 shadow_enabled = true
-omni_range = 18.0
+omni_range = 25.0
 
 [node name="CeilingLight2" type="OmniLight3D" parent="Factory" unique_id=890195561]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 4.0, 0)
-light_color = Color(1, 0.95, 0.85, 1)
-light_energy = 3.8
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 9, 12)
+light_color = Color(1, 0.9, 0.7, 1)
+light_energy = 1.5
 shadow_enabled = true
-omni_range = 16.0
+omni_range = 20.0
 
 [node name="CeilingLight3" type="OmniLight3D" parent="Factory" unique_id=1925239283]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 4.0, -6)
-light_color = Color(1, 0.95, 0.85, 1)
-light_energy = 3.4
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 9, -12)
+light_color = Color(1, 0.9, 0.7, 1)
+light_energy = 1.5
 shadow_enabled = true
-omni_range = 14.0
+omni_range = 20.0
 
-[node name="WarehouseLightA" type="SpotLight3D" parent="Factory"]
-transform = Transform3D(1, 0, 0, 0, -0.087, 0.996, 0, -0.996, -0.087, 14, 4.2, 3)
-light_color = Color(1, 0.94, 0.82, 1)
-light_energy = 4.5
-spot_range = 18.0
-spot_angle = 42.0
-shadow_enabled = true
+[node name="EmergencyLight" type="OmniLight3D" parent="Factory" unique_id=1608448310]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 8, 2)
+light_color = Color(1, 0.2, 0.1, 1)
+light_energy = 1.2
+omni_range = 15.0
 
-[node name="WarehouseLightB" type="SpotLight3D" parent="Factory"]
-transform = Transform3D(1, 0, 0, 0, -0.087, 0.996, 0, -0.996, -0.087, 17, 4.2, -4)
-light_color = Color(1, 0.94, 0.82, 1)
-light_energy = 4.2
-spot_range = 18.0
-spot_angle = 40.0
-shadow_enabled = true
-
-[node name="EmergencyLight" type="OmniLight3D" parent="Factory"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 3.5, -11)
-light_color = Color(1, 0.25, 0.12, 1)
-light_energy = 0.9
-omni_range = 12.0
-
-[node name="Reactor" type="Area3D" parent="Factory" groups=["reactors"]]
+[node name="Reactor" type="Area3D" parent="Factory" unique_id=579264567 groups=["reactors"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 2)
 script = ExtResource("7")
 
@@ -192,7 +134,7 @@ shape = SubResource("BoxShape3D_interact")
 [node name="Visual" type="Node3D" parent="Factory/Reactor" unique_id=1067631200]
 script = ExtResource("18")
 
-[node name="Mixer" type="Area3D" parent="Factory"]
+[node name="Mixer" type="Area3D" parent="Factory" unique_id=1957539446]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 1)
 script = ExtResource("8")
 
@@ -205,7 +147,7 @@ script = ExtResource("18")
 kind = 1
 accent_color = Color(0.2, 0.9, 0.35, 1)
 
-[node name="ConveyorA" type="Area3D" parent="Factory"]
+[node name="ConveyorA" type="Area3D" parent="Factory" unique_id=239919475]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 4)
 script = ExtResource("9")
 
@@ -218,7 +160,7 @@ script = ExtResource("18")
 kind = 2
 accent_color = Color(0.95, 0.75, 0.2, 1)
 
-[node name="ConveyorB" type="Area3D" parent="Factory"]
+[node name="ConveyorB" type="Area3D" parent="Factory" unique_id=531974817]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 7)
 script = ExtResource("9")
 machine_id = &"conveyor_b"
@@ -240,58 +182,55 @@ area_id = &"hall_b"
 script = ExtResource("13")
 area_id = &"warehouse"
 
-[node name="HidingCloset" type="Area3D" parent="Factory"]
+[node name="HidingCloset" type="Area3D" parent="Factory" unique_id=649306157]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 6)
 script = ExtResource("11")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/HidingCloset"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/HidingCloset" unique_id=956223860]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("BoxShape3D_small")
 
-[node name="DocumentLog" type="Area3D" parent="Factory"]
+[node name="DocumentLog" type="Area3D" parent="Factory" unique_id=37268761]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 3)
 script = ExtResource("12")
-document_id = &"doc_shift_log"
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/DocumentLog"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/DocumentLog" unique_id=1898714831]
 shape = SubResource("BoxShape3D_small")
 
-[node name="Hall8Key" type="Area3D" parent="Factory"]
+[node name="Hall8Key" type="Area3D" parent="Factory" unique_id=745944613]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0, 1)
 script = ExtResource("20")
-key_id = &"key_hall8"
-label = "Ключ от цеха №8"
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/Hall8Key"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/Hall8Key" unique_id=1709085287]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("BoxShape3D_small")
 
-[node name="Hall8Door" type="Area3D" parent="Factory"]
+[node name="Hall8Door" type="Area3D" parent="Factory" unique_id=1923732353]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -11)
 script = ExtResource("15")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/Hall8Door"]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/Hall8Door" unique_id=1832346729]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 shape = SubResource("BoxShape3D_interact")
 
-[node name="PatrolPoints" type="Node3D" parent="."]
+[node name="PatrolPoints" type="Node3D" parent="." unique_id=557048366]
 
-[node name="Patrol1" type="Node3D" parent="PatrolPoints"]
+[node name="Patrol1" type="Node3D" parent="PatrolPoints" unique_id=564714264]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 2)
 
-[node name="Patrol2" type="Node3D" parent="PatrolPoints"]
+[node name="Patrol2" type="Node3D" parent="PatrolPoints" unique_id=212035725]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 0)
 
-[node name="Patrol3" type="Node3D" parent="PatrolPoints"]
+[node name="Patrol3" type="Node3D" parent="PatrolPoints" unique_id=1620806981]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -11)
 
-[node name="Patrol4" type="Node3D" parent="PatrolPoints"]
+[node name="Patrol4" type="Node3D" parent="PatrolPoints" unique_id=1583006146]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 2)
 
-[node name="Player" parent="." instance=ExtResource("2")]
+[node name="Player" parent="." unique_id=546271544 instance=ExtResource("2")]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 12)
 
-[node name="Entity" type="CharacterBody3D" parent="."]
+[node name="Entity" type="CharacterBody3D" parent="." unique_id=957174460]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -11)
 collision_layer = 8
 collision_mask = 3
