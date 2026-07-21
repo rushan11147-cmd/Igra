@@ -150,6 +150,10 @@ toggle_fullscreen={
 ]
 }
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/sky_3d/plugin.cfg")
+
 [layer_names]
 
 3d_physics/layer_1="world"
