@@ -25,16 +25,15 @@ func _ready() -> void:
 
 
 func _build_materials() -> void:
-	# Важно: Megascans IDs вроде shhnouh — это UV-атласы пропов, НЕ тайловые стены.
-	# На больших BoxMesh они выглядят как цветная «каша». Архитектура — procedural PBR.
-	_wall_mat = _make_surface(Color(0.58, 0.55, 0.5), 0.9, 0.02, 0.35)
-	_wall_alt_mat = _make_surface(Color(0.42, 0.43, 0.45), 0.72, 0.35, 0.4)
-	_floor_mat = _make_surface(Color(0.5, 0.47, 0.42), 0.95, 0.0, 0.22)
-	_ceil_mat = _make_surface(Color(0.3, 0.29, 0.28), 0.88, 0.08, 0.5)
+	# Чистый бетон/металл под Forward+ (без prop-атласов).
+	_wall_mat = _make_surface(Color(0.62, 0.59, 0.54), 0.88, 0.02, 0.28)
+	_wall_alt_mat = _make_surface(Color(0.48, 0.49, 0.5), 0.68, 0.4, 0.32)
+	_floor_mat = _make_surface(Color(0.55, 0.52, 0.47), 0.94, 0.0, 0.18)
+	_ceil_mat = _make_surface(Color(0.34, 0.33, 0.32), 0.9, 0.05, 0.4)
 	_door_mat = StandardMaterial3D.new()
-	_door_mat.albedo_color = Color(0.28, 0.24, 0.2)
-	_door_mat.metallic = 0.55
-	_door_mat.roughness = 0.45
+	_door_mat.albedo_color = Color(0.3, 0.26, 0.22)
+	_door_mat.metallic = 0.5
+	_door_mat.roughness = 0.48
 
 
 func _make_surface(color: Color, roughness: float, metallic: float, noise_scale: float) -> StandardMaterial3D:
@@ -44,22 +43,23 @@ func _make_surface(color: Color, roughness: float, metallic: float, noise_scale:
 	mat.metallic = metallic
 	mat.uv1_triplanar = true
 	mat.uv1_world_triplanar = true
-	mat.uv1_triplanar_sharpness = 4.0
+	mat.uv1_triplanar_sharpness = 8.0
 	mat.uv1_scale = Vector3(noise_scale, noise_scale, noise_scale)
 
 	var noise := FastNoiseLite.new()
 	noise.seed = int(color.r * 1000.0 + color.g * 100.0)
-	noise.frequency = 0.035
-	noise.fractal_octaves = 3
+	noise.frequency = 0.02
+	noise.fractal_octaves = 2
+	noise.fractal_gain = 0.4
 
 	var ntex := NoiseTexture2D.new()
-	ntex.width = 512
-	ntex.height = 512
+	ntex.width = 256
+	ntex.height = 256
 	ntex.seamless = true
 	ntex.noise = noise
+	# Слабый шум — не «шумовой ковёр», а лёгкая неоднородность бетона.
 	mat.albedo_texture = ntex
-	# Смешиваем шум с базовым цветом через albedo_color
-	mat.albedo_color = color
+	mat.albedo_color = color.lerp(Color.WHITE, 0.08)
 	return mat
 
 
@@ -292,16 +292,14 @@ func _spawn_door(door_id: StringName, pos: Vector3, rot_y: float, locked: bool) 
 
 
 func _build_lights() -> void:
-	# Тёплый складской свет — ближе к референсу
-	_room_light(Vector3(0, 3.9, 2), Color(1.0, 0.9, 0.72), 2.8, 15.0)
-	_room_light(Vector3(-5, 3.9, 5), Color(1.0, 0.88, 0.7), 2.2, 12.0)
-	_room_light(Vector3(5, 3.9, 5), Color(1.0, 0.88, 0.7), 2.2, 12.0)
-	_room_light(Vector3(14.5, 3.9, 2), Color(1.0, 0.94, 0.82), 3.4, 13.0)
-	_room_light(Vector3(17.5, 3.9, -3), Color(1.0, 0.94, 0.82), 3.2, 13.0)
-	_room_light(Vector3(15.5, 3.9, -7), Color(1.0, 0.92, 0.8), 2.8, 12.0)
-	_room_light(Vector3(-15, 3.8, 2), Color(1.0, 0.9, 0.75), 2.0, 11.0)
-	_room_light(Vector3(0, 3.8, -11), Color(0.85, 0.9, 1.0), 1.8, 11.0)
-	_room_light(Vector3(-15, 3.5, -11), Color(1.0, 0.2, 0.1), 1.4, 9.0)
+	# Основные зоны; склад дополнительно подсвечивает WarehouseShowcaseLight.
+	_room_light(Vector3(0, 3.9, 2), Color(1.0, 0.9, 0.72), 2.0, 14.0)
+	_room_light(Vector3(-5, 3.9, 5), Color(1.0, 0.88, 0.7), 1.6, 11.0)
+	_room_light(Vector3(5, 3.9, 5), Color(1.0, 0.88, 0.7), 1.6, 11.0)
+	_room_light(Vector3(15.5, 3.9, 2), Color(1.0, 0.94, 0.82), 1.2, 10.0)
+	_room_light(Vector3(-15, 3.8, 2), Color(1.0, 0.9, 0.75), 1.8, 11.0)
+	_room_light(Vector3(0, 3.8, -11), Color(0.85, 0.9, 1.0), 1.6, 11.0)
+	_room_light(Vector3(-15, 3.5, -11), Color(1.0, 0.2, 0.1), 1.2, 9.0)
 
 
 func _room_light(at: Vector3, color: Color, energy: float, range_m: float) -> void:

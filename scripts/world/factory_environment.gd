@@ -1,5 +1,5 @@
 extends Node3D
-## Складской интерьер из Megascans: стеллажи, коробки, бочки, оборудование.
+## Складской интерьер из Megascans: плотная «витринная» раскладка под Forward+.
 ## Текстуры навешиваются явно — FBX Quixel без автоматериалов.
 
 const TARGET_HEIGHT := 2.2
@@ -7,7 +7,7 @@ const TARGET_HEIGHT := 2.2
 
 func _ready() -> void:
 	_place_production_props()
-	_place_warehouse_aisles()
+	_place_warehouse_showcase()
 	_place_office_props()
 	_place_utility_props()
 	_place_hall8_props()
@@ -15,57 +15,69 @@ func _ready() -> void:
 
 
 func _place_production_props() -> void:
-	# Крупное оборудование без «игрушечных» цилиндров
-	_spawn("wbslaikga", Vector3(-7, 0, 1), 0.35, 3.2)
-	_spawn("wbuidixga", Vector3(7, 0, 0), -0.5, 3.0)
+	# Не ставим пропы в дверные проёмы (x=±10, z=0 и z=-6).
+	_spawn("wbslaikga", Vector3(-6, 0, 3), 0.35, 3.2)
+	_spawn("wbuidixga", Vector3(5, 0, 4), -0.5, 3.0)
 	_spawn("vgyiedcaw", Vector3(1, 0, -3), 1.1, 2.2)
-	_spawn("villceo", Vector3(-2, 0, 6), 0.15, 1.8)
-	_spawn("vhtmaifaw", Vector3(4, 0, 6), PI, 1.6)
-	_spawn("tewscfuda", Vector3(-4, 0, 8), 0.0, 1.4)
-	_spawn("virqcfw", Vector3(8, 0, -4), PI * 0.5, 2.2)
-
-	# Бочки / канистры у прохода
-	_spawn("vgyidebaw", Vector3(-1, 0, 4), 0.2, 1.0)
-	_spawn("vgyide1aw", Vector3(0.4, 0, 4.3), -0.4, 1.0)
-	_spawn("vidrear", Vector3(2, 0, 8), 0.6, 1.1)
+	_spawn("villceo", Vector3(-3, 0, 7), 0.15, 1.8)
+	_spawn("vhtmaifaw", Vector3(3, 0, 7), PI, 1.6)
+	_spawn("tewscfuda", Vector3(-4, 0, 9), 0.0, 1.4)
+	_spawn("virqcfw", Vector3(6, 0, -3), PI * 0.5, 2.2)
+	_spawn("vgyidebaw", Vector3(-1, 0, 5), 0.2, 1.0)
+	_spawn("vgyide1aw", Vector3(0.4, 0, 5.3), -0.4, 1.0)
+	_spawn("vidrear", Vector3(2, 0, 9), 0.6, 1.1)
 
 
-func _place_warehouse_aisles() -> void:
-	# Два ряда стеллажей — как на референсе склада
+func _place_warehouse_showcase() -> void:
+	# Три ряда стеллажей, с свободным проходом к двери склада (x≈10, z≈0).
 	var shelf_ids: Array[String] = [
 		"vh3lbfy", "vhtibbe", "vgyiciqaw", "vijnbi3",
 		"vijnbhf", "virvfjk", "vizqehw", "vijnbjz",
 	]
 
-	# Левый ряд (восток)
-	for i in 6:
+	# Ряд A — отодвинут от двери (не ближе x=13), пропускаем z около 0
+	for i in 7:
+		var z := -9.0 + i * 2.55
+		if absf(z) < 2.2:
+			continue
 		var id: String = shelf_ids[i % shelf_ids.size()]
-		var z := -8.0 + i * 2.6
-		_spawn(id, Vector3(13.5, 0, z), PI * 0.5, 3.4)
+		_spawn(id, Vector3(13.2, 0, z), PI * 0.5, 3.6)
 
-	# Правый ряд
-	for i in 6:
-		var id: String = shelf_ids[(i + 3) % shelf_ids.size()]
-		var z := -8.0 + i * 2.6
-		_spawn(id, Vector3(18.2, 0, z), -PI * 0.5, 3.4)
+	# Ряд B
+	for i in 7:
+		var z := -9.0 + i * 2.55
+		if absf(z) < 1.6:
+			continue
+		var id: String = shelf_ids[(i + 2) % shelf_ids.size()]
+		_spawn(id, Vector3(16.2, 0, z), -PI * 0.5 if i % 2 == 0 else PI * 0.5, 3.7)
 
-	# Коробки на полу между рядами и у торцов
+	# Ряд C
+	for i in 7:
+		var z := -9.0 + i * 2.55
+		var id: String = shelf_ids[(i + 4) % shelf_ids.size()]
+		_spawn(id, Vector3(19.2, 0, z), -PI * 0.5, 3.5)
+
+	# Коробки — не в коридоре к двери
 	var box_ids: Array[String] = WarehouseCatalog.BOXES
-	for i in 14:
+	for i in 18:
 		var id: String = box_ids[i % box_ids.size()]
-		var x := 14.5 + (i % 3) * 1.35
-		var z := -7.5 + int(i / 3) * 2.0 + randf_range(-0.2, 0.2)
-		_spawn(id, Vector3(x, 0, z), randf_range(-0.3, 0.3), randf_range(0.7, 1.15))
+		var lane := i % 2
+		var x := 14.2 + lane * 3.2 + randf_range(-0.1, 0.1)
+		var z := -8.0 + int(i / 2) * 1.7 + randf_range(-0.1, 0.1)
+		if absf(z) < 2.0 and x < 15.0:
+			continue
+		_spawn(id, Vector3(x, 0, z), randf_range(-0.25, 0.25), randf_range(0.75, 1.15))
 
-	# Палеты / доп. стеллажи у южной стены склада
-	_spawn("vizqehw", Vector3(16, 0, 10), 0.2, 2.8)
-	_spawn("vijnbjz", Vector3(12.5, 0, 10), PI * 0.15, 2.6)
-	_spawn("vh3lbfy", Vector3(19, 0, 8), PI, 3.0)
-
-	# Лестница / тележка / бочка в проходе
-	_spawn("vh1icei", Vector3(15.5, 0, 2), 0.4, 2.4)
-	_spawn("vgyidebaw", Vector3(16.2, 0, -1), 0.1, 1.05)
-	_spawn("vhtmaifaw", Vector3(11.8, 0, -2), -0.3, 1.5)
+	# Акценты подальше от дверного проёма
+	_spawn("vgyidebaw", Vector3(15.5, 0, 5.5), 0.2, 1.05)
+	_spawn("vgyide1aw", Vector3(16.2, 0, 5.8), -0.5, 1.0)
+	_spawn("vh1icei", Vector3(17.0, 0, 3.0), 0.55, 2.5)
+	_spawn("vhtmaifaw", Vector3(14.5, 0, 8.5), -0.2, 1.6)
+	_spawn("vizqehw", Vector3(17.5, 0, 10.5), 0.1, 2.9)
+	_spawn("vijnbjz", Vector3(14.5, 0, 10.2), 0.2, 2.7)
+	_spawn("vh3lbfy", Vector3(19.0, 0, 9.5), PI * 0.9, 3.2)
+	_spawn("vidrear", Vector3(15.5, 0, -6.5), 0.8, 1.15)
+	_spawn("tewscfuda", Vector3(18.5, 0, -3.5), PI * 0.25, 1.5)
 
 
 func _place_office_props() -> void:
@@ -95,13 +107,16 @@ func _place_hall8_props() -> void:
 
 
 func _place_floor_markings() -> void:
-	# Белые разметки проходов на складе
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.92, 0.92, 0.9)
-	mat.roughness = 0.9
-	_marking_line(Vector3(15.8, 0.03, 0), Vector3(0.12, 0.02, 18), mat)
-	_marking_line(Vector3(12.2, 0.03, 0), Vector3(0.12, 0.02, 18), mat)
-	_marking_line(Vector3(16, 0.03, -9.2), Vector3(8, 0.02, 0.12), mat)
+	mat.albedo_color = Color(0.93, 0.93, 0.9)
+	mat.roughness = 0.85
+	mat.emission_enabled = true
+	mat.emission = Color(0.35, 0.35, 0.32)
+	mat.emission_energy_multiplier = 0.15
+	_marking_line(Vector3(14.2, 0.03, 0.5), Vector3(0.14, 0.02, 20), mat)
+	_marking_line(Vector3(17.6, 0.03, 0.5), Vector3(0.14, 0.02, 20), mat)
+	_marking_line(Vector3(15.9, 0.03, -9.5), Vector3(8.5, 0.02, 0.14), mat)
+	_marking_line(Vector3(15.9, 0.03, 10.8), Vector3(8.5, 0.02, 0.14), mat)
 
 
 func _marking_line(pos: Vector3, size: Vector3, mat: Material) -> void:

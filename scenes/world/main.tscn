@@ -20,13 +20,16 @@
 [ext_resource type="Script" uid="uid://8domajea8bs1" path="res://scripts/world/machine_visual.gd" id="18"]
 [ext_resource type="PackedScene" uid="uid://pausemenu001" path="res://scenes/ui/pause_menu.tscn" id="19"]
 [ext_resource type="Script" path="res://scripts/interactables/key_pickup.gd" id="20"]
+[ext_resource type="Script" path="res://scripts/world/warehouse_showcase_light.gd" id="21"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_1"]
-sky_top_color = Color(0.18, 0.22, 0.28, 1)
-sky_horizon_color = Color(0.35, 0.32, 0.28, 1)
-sky_curve = 0.12
-ground_bottom_color = Color(0.12, 0.11, 0.1, 1)
-ground_horizon_color = Color(0.25, 0.23, 0.2, 1)
+sky_top_color = Color(0.42, 0.55, 0.72, 1)
+sky_horizon_color = Color(0.72, 0.7, 0.62, 1)
+sky_curve = 0.08
+ground_bottom_color = Color(0.18, 0.16, 0.14, 1)
+ground_horizon_color = Color(0.4, 0.38, 0.34, 1)
+sun_angle_max = 35.0
+sun_curve = 0.12
 
 [sub_resource type="Sky" id="Sky_1"]
 sky_material = SubResource("ProceduralSkyMaterial_1")
@@ -34,33 +37,51 @@ sky_material = SubResource("ProceduralSkyMaterial_1")
 [sub_resource type="Environment" id="Environment_1"]
 background_mode = 2
 sky = SubResource("Sky_1")
-ambient_light_source = 2
-ambient_light_color = Color(0.45, 0.42, 0.38, 1)
-ambient_light_energy = 0.55
-tonemap_mode = 2
-tonemap_exposure = 1.05
+ambient_light_source = 3
+ambient_light_color = Color(0.55, 0.52, 0.48, 1)
+ambient_light_energy = 0.35
+ambient_light_sky_contribution = 0.65
+tonemap_mode = 3
+tonemap_exposure = 1.0
+tonemap_white = 6.0
+ssao_enabled = true
+ssao_radius = 1.2
+ssao_intensity = 2.2
+ssil_enabled = true
+ssil_intensity = 1.0
+sdfgi_enabled = true
+sdfgi_use_occlusion = true
 glow_enabled = true
-glow_intensity = 0.35
-glow_bloom = 0.08
+glow_intensity = 0.45
+glow_bloom = 0.12
+glow_hdr_threshold = 0.9
 fog_enabled = true
-fog_light_color = Color(0.55, 0.52, 0.48, 1)
-fog_density = 0.004
-fog_aerial_perspective = 0.15
+fog_light_color = Color(0.7, 0.68, 0.62, 1)
+fog_density = 0.0025
+fog_aerial_perspective = 0.25
+fog_sky_affect = 0.35
+volumetric_fog_enabled = true
+volumetric_fog_density = 0.018
+volumetric_fog_albedo = Color(0.75, 0.72, 0.68, 1)
+volumetric_fog_emission = Color(0.15, 0.14, 0.12, 1)
+volumetric_fog_anisotropy = 0.35
+volumetric_fog_length = 40.0
+volumetric_fog_ambient_inject = 0.25
 adjustment_enabled = true
-adjustment_brightness = 1.08
-adjustment_contrast = 1.05
-adjustment_saturation = 0.95
+adjustment_brightness = 1.05
+adjustment_contrast = 1.08
+adjustment_saturation = 0.98
 
 [sub_resource type="BoxMesh" id="BoxMesh_floor"]
 size = Vector3(80, 0.2, 80)
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor"]
-albedo_color = Color(0.5, 0.47, 0.42, 1)
-roughness = 0.95
+albedo_color = Color(0.52, 0.49, 0.44, 1)
+roughness = 0.92
 metallic = 0.0
 uv1_triplanar = true
 uv1_world_triplanar = true
-uv1_scale = Vector3(0.25, 0.25, 0.25)
+uv1_scale = Vector3(0.2, 0.2, 0.2)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
 size = Vector3(80, 0.2, 80)
@@ -92,15 +113,18 @@ script = ExtResource("1")
 environment = SubResource("Environment_1")
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=1958274233]
-transform = Transform3D(0.866, -0.354, 0.354, 0, 0.707, 0.707, -0.5, -0.612, 0.612, 8, 18, 6)
-light_color = Color(1, 0.93, 0.82, 1)
-light_energy = 1.35
+transform = Transform3D(0.766, -0.492, 0.413, 0, 0.643, 0.766, -0.643, -0.586, 0.492, 10, 22, 8)
+light_color = Color(1, 0.95, 0.86, 1)
+light_energy = 0.55
 shadow_enabled = true
 directional_shadow_mode = 1
 
 [node name="Factory" type="Node3D" parent="." unique_id=1167207831]
 
 [node name="FactoryEnvironment" parent="Factory" unique_id=530613298 instance=ExtResource("16")]
+
+[node name="WarehouseShowcaseLight" type="Node3D" parent="Factory"]
+script = ExtResource("21")
 
 [node name="FactoryInterior" parent="Factory" unique_id=1717916751 instance=ExtResource("17")]
 
@@ -265,7 +289,7 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -11)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 2)
 
 [node name="Player" parent="." instance=ExtResource("2")]
-transform = Transform3D(-0.087, 0, 0.996, 0, 1, 0, -0.996, 0, -0.087, 15.5, 0, 8)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 12)
 
 [node name="Entity" type="CharacterBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -11)
