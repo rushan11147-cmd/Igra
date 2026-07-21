@@ -1,0 +1,12 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# OS / editor
+.DS_Store
+*.tmp
+*~
+
+# Duplicate / archive sources (GLB copies live in assets/models/industrial/)
+assets/models/extracted/
+assets/models/*.zip
