@@ -12,25 +12,14 @@
 [ext_resource type="PackedScene" uid="uid://tablet001" path="res://scenes/ui/tablet.tscn" id="10"]
 [ext_resource type="Script" uid="uid://bwdfjatadtu0k" path="res://scripts/interactables/hiding_spot.gd" id="11"]
 [ext_resource type="Script" uid="uid://b5ls3n8i18x41" path="res://scripts/interactables/document_pickup.gd" id="12"]
-[ext_resource type="Script" uid="uid://d13mkas1rwau" path="res://scripts/world/factory_area.gd" id="13"]
 [ext_resource type="PackedScene" uid="uid://35kxgl6x1yro" path="res://scenes/ui/shift_choice.tscn" id="14"]
 [ext_resource type="Script" uid="uid://boc31ni6irdmx" path="res://scripts/interactables/hall8_door.gd" id="15"]
-[ext_resource type="PackedScene" uid="uid://bewx3p143o5aa" path="res://scenes/world/factory_environment.tscn" id="16"]
-[ext_resource type="PackedScene" uid="uid://7fg8o5u4lo2c" path="res://scenes/world/factory_interior.tscn" id="17"]
 [ext_resource type="Script" uid="uid://8domajea8bs1" path="res://scripts/world/machine_visual.gd" id="18"]
 [ext_resource type="PackedScene" uid="uid://pausemenu001" path="res://scenes/ui/pause_menu.tscn" id="19"]
 [ext_resource type="Script" uid="uid://c8bdvvwx3xxsr" path="res://scripts/interactables/key_pickup.gd" id="20"]
 [ext_resource type="PackedScene" uid="uid://factorysky001" path="res://scenes/world/factory_sky.tscn" id="21"]
-
-[sub_resource type="BoxMesh" id="BoxMesh_floor"]
-size = Vector3(80, 0.2, 80)
-
-[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_floor"]
-albedo_color = Color(0.15, 0.15, 0.17, 1)
-roughness = 0.95
-
-[sub_resource type="BoxShape3D" id="BoxShape3D_floor"]
-size = Vector3(80, 0.2, 80)
+[ext_resource type="Script" path="res://scripts/world/factory_map/gameplay_anchor.gd" id="22"]
+[ext_resource type="PackedScene" path="res://scenes/world/factory_map/factory_map.tscn" id="23"]
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_interact"]
 size = Vector3(2, 2, 2)
@@ -59,192 +48,190 @@ script = ExtResource("1")
 
 [node name="Factory" type="Node3D" parent="."]
 
-[node name="FactoryEnvironment" parent="Factory" unique_id=530613298 instance=ExtResource("16")]
+[node name="FactoryMap" parent="Factory" instance=ExtResource("23")]
 
-[node name="FactoryInterior" parent="Factory" unique_id=1717916751 instance=ExtResource("17")]
-
-[node name="Floor" type="StaticBody3D" parent="Factory" unique_id=894790530]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.05, 0)
-
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Factory/Floor" unique_id=855634098]
-mesh = SubResource("BoxMesh_floor")
-surface_material_override/0 = SubResource("StandardMaterial3D_floor")
-
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/Floor" unique_id=2137302976]
-shape = SubResource("BoxShape3D_floor")
-
-[node name="CeilingLight1" type="OmniLight3D" parent="Factory" unique_id=1907208388]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, 0)
-light_color = Color(1, 0.85, 0.65, 1)
-light_energy = 2.0
-shadow_enabled = true
-omni_range = 25.0
-
-[node name="CeilingLight2" type="OmniLight3D" parent="Factory" unique_id=890195561]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 9, 12)
-light_color = Color(1, 0.9, 0.7, 1)
-light_energy = 1.5
-shadow_enabled = true
-omni_range = 20.0
-
-[node name="CeilingLight3" type="OmniLight3D" parent="Factory" unique_id=1925239283]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 9, -12)
-light_color = Color(1, 0.9, 0.7, 1)
-light_energy = 1.5
-shadow_enabled = true
-omni_range = 20.0
-
-[node name="EmergencyLight" type="OmniLight3D" parent="Factory" unique_id=1608448310]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 8, 2)
-light_color = Color(1, 0.2, 0.1, 1)
-light_energy = 1.2
-omni_range = 15.0
-
-[node name="Reactor" type="Area3D" parent="Factory" unique_id=579264567 groups=["reactors"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 2)
+[node name="Reactor" type="Area3D" parent="Factory" groups=["reactors"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -24)
 script = ExtResource("7")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/Reactor" unique_id=1063887809]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/Reactor"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("BoxShape3D_interact")
 
-[node name="Visual" type="Node3D" parent="Factory/Reactor" unique_id=1067631200]
+[node name="Visual" type="Node3D" parent="Factory/Reactor"]
 script = ExtResource("18")
 
-[node name="Mixer" type="Area3D" parent="Factory" unique_id=1957539446]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 3, 0, 1)
+[node name="GameplayAnchor" type="Node3D" parent="Factory/Reactor"]
+script = ExtResource("22")
+marker_name = "Reactor"
+target_path = NodePath("..")
+
+[node name="Mixer" type="Area3D" parent="Factory"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4, 0, -22)
 script = ExtResource("8")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/Mixer" unique_id=917212986]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/Mixer"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("BoxShape3D_interact")
 
-[node name="Visual" type="Node3D" parent="Factory/Mixer" unique_id=962378577]
+[node name="Visual" type="Node3D" parent="Factory/Mixer"]
 script = ExtResource("18")
 kind = 1
 accent_color = Color(0.2, 0.9, 0.35, 1)
 
-[node name="ConveyorA" type="Area3D" parent="Factory" unique_id=239919475]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 4)
+[node name="GameplayAnchor" type="Node3D" parent="Factory/Mixer"]
+script = ExtResource("22")
+marker_name = "Mixer"
+target_path = NodePath("..")
+
+[node name="ConveyorA" type="Area3D" parent="Factory"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 0, -28)
 script = ExtResource("9")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/ConveyorA" unique_id=1005606678]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/ConveyorA"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_interact")
 
-[node name="Visual" type="Node3D" parent="Factory/ConveyorA" unique_id=1647790968]
+[node name="Visual" type="Node3D" parent="Factory/ConveyorA"]
 script = ExtResource("18")
 kind = 2
 accent_color = Color(0.95, 0.75, 0.2, 1)
 
-[node name="ConveyorB" type="Area3D" parent="Factory" unique_id=531974817]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 0, 7)
+[node name="GameplayAnchor" type="Node3D" parent="Factory/ConveyorA"]
+script = ExtResource("22")
+marker_name = "ConveyorA"
+target_path = NodePath("..")
+
+[node name="ConveyorB" type="Area3D" parent="Factory"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 0, -32)
 script = ExtResource("9")
 machine_id = &"conveyor_b"
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/ConveyorB" unique_id=614604701]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/ConveyorB"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.5, 0)
 shape = SubResource("BoxShape3D_interact")
 
-[node name="Visual" type="Node3D" parent="Factory/ConveyorB" unique_id=799130640]
+[node name="Visual" type="Node3D" parent="Factory/ConveyorB"]
 script = ExtResource("18")
 kind = 2
 accent_color = Color(0.95, 0.75, 0.2, 1)
 
-[node name="HallB" type="Node3D" parent="Factory" unique_id=1359292328 groups=["factory_areas"]]
-script = ExtResource("13")
-area_id = &"hall_b"
+[node name="GameplayAnchor" type="Node3D" parent="Factory/ConveyorB"]
+script = ExtResource("22")
+marker_name = "ConveyorB"
+target_path = NodePath("..")
 
-[node name="Warehouse" type="Node3D" parent="Factory" unique_id=323962812 groups=["factory_areas"]]
-script = ExtResource("13")
-area_id = &"warehouse"
-
-[node name="HidingCloset" type="Area3D" parent="Factory" unique_id=649306157]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 6)
+[node name="HidingCloset" type="Area3D" parent="Factory"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, 0)
 script = ExtResource("11")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/HidingCloset" unique_id=956223860]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/HidingCloset"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("BoxShape3D_small")
 
-[node name="DocumentLog" type="Area3D" parent="Factory" unique_id=37268761]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 3)
+[node name="GameplayAnchor" type="Node3D" parent="Factory/HidingCloset"]
+script = ExtResource("22")
+marker_name = "HidingCloset"
+target_path = NodePath("..")
+
+[node name="DocumentLog" type="Area3D" parent="Factory"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0, 20)
 script = ExtResource("12")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/DocumentLog" unique_id=1898714831]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/DocumentLog"]
 shape = SubResource("BoxShape3D_small")
 
-[node name="Hall8Key" type="Area3D" parent="Factory" unique_id=745944613]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 0, 1)
+[node name="GameplayAnchor" type="Node3D" parent="Factory/DocumentLog"]
+script = ExtResource("22")
+marker_name = "DocumentLog"
+target_path = NodePath("..")
+
+[node name="Hall8Key" type="Area3D" parent="Factory"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, 12)
 script = ExtResource("20")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/Hall8Key" unique_id=1709085287]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/Hall8Key"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1, 0)
 shape = SubResource("BoxShape3D_small")
 
-[node name="Hall8Door" type="Area3D" parent="Factory" unique_id=1923732353]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15, 0, -11)
+[node name="GameplayAnchor" type="Node3D" parent="Factory/Hall8Key"]
+script = ExtResource("22")
+marker_name = "Hall8Key"
+target_path = NodePath("..")
+
+[node name="Hall8Door" type="Area3D" parent="Factory"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 0, -22)
 script = ExtResource("15")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/Hall8Door" unique_id=1832346729]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Factory/Hall8Door"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 shape = SubResource("BoxShape3D_interact")
 
-[node name="PatrolPoints" type="Node3D" parent="." unique_id=557048366]
+[node name="GameplayAnchor" type="Node3D" parent="Factory/Hall8Door"]
+script = ExtResource("22")
+marker_name = "Hall8Door"
+target_path = NodePath("..")
 
-[node name="Patrol1" type="Node3D" parent="PatrolPoints" unique_id=564714264]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 0, 2)
+[node name="PatrolPoints" type="Node3D" parent="."]
 
-[node name="Patrol2" type="Node3D" parent="PatrolPoints" unique_id=212035725]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 0, 0)
+[node name="Patrol1" type="Node3D" parent="PatrolPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -24)
 
-[node name="Patrol3" type="Node3D" parent="PatrolPoints" unique_id=1620806981]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -11)
+[node name="Patrol2" type="Node3D" parent="PatrolPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 0, 0)
 
-[node name="Patrol4" type="Node3D" parent="PatrolPoints" unique_id=1583006146]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, 2)
+[node name="Patrol3" type="Node3D" parent="PatrolPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -40)
 
-[node name="Player" parent="." unique_id=546271544 instance=ExtResource("2")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 12)
+[node name="Patrol4" type="Node3D" parent="PatrolPoints"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, 10)
 
-[node name="Entity" type="CharacterBody3D" parent="." unique_id=957174460]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0, -11)
+[node name="Player" parent="." instance=ExtResource("2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 44)
+
+[node name="GameplayAnchor" type="Node3D" parent="Player"]
+script = ExtResource("22")
+marker_name = "PlayerSpawn"
+target_path = NodePath("..")
+
+[node name="Entity" type="CharacterBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 0, -22)
 collision_layer = 8
 collision_mask = 3
 script = ExtResource("6")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="Entity" unique_id=798662210]
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Entity"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
 mesh = SubResource("CapsuleMesh_entity")
 surface_material_override/0 = SubResource("StandardMaterial3D_entity")
 
-[node name="CollisionShape3D" type="CollisionShape3D" parent="Entity" unique_id=2132531872]
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Entity"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 0)
 shape = SubResource("CapsuleShape3D_entity")
 
-[node name="GlowLight" type="OmniLight3D" parent="Entity" unique_id=2124933814]
+[node name="GlowLight" type="OmniLight3D" parent="Entity"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.5, 0)
 light_color = Color(0.55, 0.08, 0.12, 1)
 light_energy = 1.2
 omni_range = 4.0
 
-[node name="ParanormalHandler" type="Node" parent="." unique_id=578942849]
+[node name="ParanormalHandler" type="Node" parent="."]
 script = ExtResource("5")
 
-[node name="AmbientHum" type="AudioStreamPlayer" parent="ParanormalHandler" unique_id=43249598]
+[node name="AmbientHum" type="AudioStreamPlayer" parent="ParanormalHandler"]
 volume_db = -15.0
 
-[node name="EventPlayer" type="AudioStreamPlayer" parent="ParanormalHandler" unique_id=744589267]
+[node name="EventPlayer" type="AudioStreamPlayer" parent="ParanormalHandler"]
 
-[node name="MachinePlayer" type="AudioStreamPlayer" parent="ParanormalHandler" unique_id=1645298168]
+[node name="MachinePlayer" type="AudioStreamPlayer" parent="ParanormalHandler"]
 volume_db = -16.0
 
-[node name="HUD" parent="." unique_id=1805085825 instance=ExtResource("3")]
+[node name="HUD" parent="." instance=ExtResource("3")]
 
-[node name="ShiftReport" parent="." unique_id=376599412 instance=ExtResource("4")]
+[node name="ShiftReport" parent="." instance=ExtResource("4")]
 
-[node name="Tablet" parent="." unique_id=1887340654 instance=ExtResource("10")]
+[node name="Tablet" parent="." instance=ExtResource("10")]
 
-[node name="ShiftChoice" parent="." unique_id=1019229884 instance=ExtResource("14")]
+[node name="ShiftChoice" parent="." instance=ExtResource("14")]
 
-[node name="PauseMenu" parent="." unique_id=323408414 instance=ExtResource("19")]
+[node name="PauseMenu" parent="." instance=ExtResource("19")]

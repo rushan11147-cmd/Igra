@@ -27,6 +27,36 @@ const AREAS: Dictionary = {
 		"unlocked_by_default": false,
 		"unlock_task": &"repair_pump",
 	},
+	&"basement_1": {
+		"name": "Подвал 1 — Инженерные системы",
+		"unlocked_by_default": false,
+		"unlock_task": &"repair_pump",
+	},
+	&"basement_2": {
+		"name": "Подвал 2 — Заброшенный блок",
+		"unlocked_by_default": false,
+		"unlock_task": &"repair_pump",
+	},
+	&"floor2": {
+		"name": "Этаж 2 — Производство",
+		"unlocked_by_default": true,
+		"unlock_task": &"",
+	},
+	&"floor3": {
+		"name": "Этаж 3 — Лаборатории",
+		"unlocked_by_default": true,
+		"unlock_task": &"",
+	},
+	&"floor4": {
+		"name": "Этаж 4 — Секретный блок",
+		"unlocked_by_default": false,
+		"unlock_task": &"clean_reactor",
+	},
+	&"roof": {
+		"name": "Крыша — Техническая площадка",
+		"unlocked_by_default": true,
+		"unlock_task": &"",
+	},
 	&"director_office": {
 		"name": "Кабинет директора",
 		"unlocked_by_default": false,

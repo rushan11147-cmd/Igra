@@ -26,12 +26,10 @@ func _register_factory_nodes() -> void:
 		if node is Light3D:
 			lights.append(node)
 
-	# Auto-register all omni lights in factory
 	for child in $Factory.get_children():
 		if child is OmniLight3D:
 			child.add_to_group("factory_lights")
 			lights.append(child)
-	_register_interior_lights(lights)
 
 	var cameras: Array[Node3D] = []
 	for node in get_tree().get_nodes_in_group("security_cameras"):
@@ -40,21 +38,31 @@ func _register_factory_nodes() -> void:
 	_paranormal.register_lights(lights)
 	_paranormal.register_cameras(cameras)
 
-	# Wire entity patrol points
 	var points: Array[Node3D] = []
 	for child in $PatrolPoints.get_children():
 		points.append(child)
 	_entity.patrol_points = points
 
+	call_deferred("_snap_patrol_to_markers")
 
-func _register_interior_lights(lights: Array[Light3D]) -> void:
-	var interior := $Factory.get_node_or_null("FactoryInterior")
-	if interior == null:
+
+func _snap_patrol_to_markers() -> void:
+	var fmap := $Factory.get_node_or_null("FactoryMap")
+	if fmap == null or not fmap.has_method("find_marker"):
 		return
-	for node in interior.get_children():
-		if node is OmniLight3D:
-			node.add_to_group("factory_lights")
-			lights.append(node)
+	var mapping := {
+		"Patrol1": "Patrol1",
+		"Patrol2": "Patrol2",
+		"Patrol3": "Patrol3",
+		"Patrol4": "Patrol4",
+	}
+	for child in $PatrolPoints.get_children():
+		var key := String(child.name)
+		if not mapping.has(key):
+			continue
+		var marker: Marker3D = fmap.find_marker(mapping[key])
+		if marker:
+			child.global_position = marker.global_position
 
 
 func _on_continue_shift() -> void:
