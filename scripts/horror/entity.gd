@@ -24,6 +24,8 @@ var _target_hide_spot: StringName = &""
 var _sabotage_target: Node = null
 var _footstep_timer: float = 0.0
 var _ambient_timer: float = 0.0
+var _scream_cooldown: float = 0.0
+var _was_hunting: bool = false
 
 @onready var _mesh: MeshInstance3D = $MeshInstance3D
 @onready var _glow: OmniLight3D = $GlowLight
@@ -82,8 +84,14 @@ func _physics_process(delta: float) -> void:
 	_find_player()
 	_manifest_timer -= delta
 	_observe_timer -= delta
+	_scream_cooldown = maxf(0.0, _scream_cooldown - delta)
 	_update_audio(delta)
 	_face_player(delta)
+
+	var hunting_now := _state == State.HUNTING
+	if hunting_now and not _was_hunting:
+		_scream()
+	_was_hunting = hunting_now
 
 	match _state:
 		State.OBSERVING:
@@ -120,8 +128,11 @@ func _update_audio(delta: float) -> void:
 		_footstep_timer = FOOTSTEP_INTERVAL if _state != State.HUNTING else 0.35
 		_play_sfx(SoundLibrary.pick_random(SoundLibrary.FOOTSTEPS), -2.0, 0.85 + randf() * 0.3)
 	if _ambient_timer <= 0.0:
-		_ambient_timer = randf_range(3.0, 7.0)
-		_play_sfx(SoundLibrary.pick_random(SoundLibrary.WHISPERS), -6.0, 0.6 + randf() * 0.5)
+		_ambient_timer = randf_range(5.0, 10.0)
+		if randf() < 0.45:
+			_scream()
+		else:
+			_play_sfx(SoundLibrary.pick_random(SoundLibrary.WHISPERS), -6.0, 0.6 + randf() * 0.5)
 
 
 func _play_sfx(path: String, volume_db: float = -4.0, pitch: float = 1.0) -> void:
@@ -134,6 +145,15 @@ func _play_sfx(path: String, volume_db: float = -4.0, pitch: float = 1.0) -> voi
 	_sfx.volume_db = volume_db
 	_sfx.pitch_scale = pitch
 	_sfx.play()
+
+
+func _scream(force: bool = false) -> void:
+	if not force and _scream_cooldown > 0.0:
+		return
+	_scream_cooldown = randf_range(4.0, 8.0)
+	var path := SoundLibrary.pick_random(SoundLibrary.SCREAMS)
+	# Slightly lower pitch = more inhuman
+	_play_sfx(path, 2.0, 0.75 + randf() * 0.25)
 
 
 func _play_ambience_loop() -> void:
@@ -169,7 +189,7 @@ func _on_spawned(is_hallucination: bool, creature_type: StringName) -> void:
 	_manifest_timer = MANIFEST_DURATION
 	_update_appearance()
 	_play_ambience_loop()
-	_play_sfx(SoundLibrary.pick_random(SoundLibrary.WHISPERS), 0.0, 0.45)
+	_scream(true)
 
 	if is_hallucination:
 		_state = State.MANIFESTING
@@ -185,6 +205,9 @@ func _on_spawned(is_hallucination: bool, creature_type: StringName) -> void:
 		_state = State.OBSERVING
 		global_position = _get_spawn_position()
 		_observe_timer = randf_range(20.0, 50.0)
+
+	# Avoid double scream on the first hunt frame after spawn
+	_was_hunting = _state == State.HUNTING
 
 	# Keep on floor
 	global_position.y = 0.0
@@ -281,7 +304,7 @@ func _do_hunt(_delta: float) -> void:
 	if CreatureManager.should_attack() and global_position.distance_to(_player.global_position) < 2.2:
 		if _player.has_method("take_damage"):
 			_player.take_damage(20.0)
-		_play_sfx(SoundLibrary.pick_random(SoundLibrary.DOOR_SLAMS), 2.0, 0.35)
+		_scream(true)
 		_state = State.RETREATING
 
 
@@ -403,17 +426,11 @@ func _find_sabotage_target(type: StringName) -> Node:
 
 
 func _update_appearance() -> void:
-	var emissions: Dictionary = {
-		&"observer": Color(0.7, 0.72, 0.8),
-		&"hunter": Color(0.9, 0.15, 0.1),
-		&"crawler": Color(0.3, 0.7, 0.25),
-		&"shadow": Color(0.45, 0.15, 0.7),
-	}
 	if _glow:
-		_glow.light_color = emissions.get(_creature_type, Color(0.8, 0.7, 0.65))
-		_glow.light_energy = 2.2 if _creature_type == &"hunter" else 1.4
-		_glow.omni_range = 6.0
-		_glow.position = Vector3(0, 2.6, 0.3)
+		_glow.light_color = Color(0.7, 0.15, 0.1)
+		_glow.light_energy = 2.0 if _creature_type == &"hunter" else 1.5
+		_glow.omni_range = 5.5
+		_glow.position = Vector3(0, 2.4, 0.25)
 
 	var visual := get_node_or_null("MonsterVisual")
 	if visual and _creature_type == &"crawler":
